@@ -259,7 +259,7 @@ $custom-control-indicator-bg:$primary;*/
   --secondary-btn-shadow-hover: 0 3px 8px 0 rgb(64 213 125 / 30%);
   --secondary-btn-color: #ffffff;
   --secondary-btn-color-hover: #ffffff;
-  --font-family-base: "main-font-family";
+    --font-family-base: Arial, Helvetica, sans-serif; /* default font */
   --font-family-rtl: "rtl-font-family";
 }
 
@@ -19733,4 +19733,7 @@ p {
 
 .custom-checkbox .custom-control-input:disabled:checked ~ .custom-control-label::before {
   opacity: 0.6 !important;
+}
+body {
+    font-family: var(--font-family-base);
 }
