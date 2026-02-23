@@ -63,10 +63,18 @@
                             ></div>
                         </div>
                     </form>
-                <?php else: ?>
+                <?php else: ?>   
                     <div class="mr-15 mx-md-20"></div>
                 <?php endif; ?>
-
+                <div class="mr-15 mx-md-20 d-flex align-items-center">
+                     <label for="fontSelector" class="mr-5 mb-0 font-14 text-dark-blue">Font:</label>
+                    <select id="fontSelector" onchange="setFont(this.value)" class="form-control form-control-sm">
+                    <option value="Arial, Helvetica, sans-serif">Arial</option>
+                    <option value="Times New Roman, Times, serif">Times</option>
+                    <option value="Courier New, monospace">Courier</option>
+                     <option value="Montserrat, sans-serif">Montserrat</option>
+                    </select>
+                </div>
 
                 <form action="/search" method="get" class="form-inline my-2 my-lg-0 navbar-search position-relative">
                     <input class="form-control mr-5 rounded" type="text" name="search" placeholder="<?php echo e(trans('navbar.search_anything')); ?>" aria-label="Search">
@@ -99,5 +107,22 @@
     <link href="/assets/default/vendors/flagstrap/css/flags.css" rel="stylesheet">
     <script src="/assets/default/vendors/flagstrap/js/jquery.flagstrap.min.js"></script>
     <script src="/assets/default/js/parts/top_nav_flags.min.js"></script>
+<script>
+function setFont(font){
+    document.documentElement.style.setProperty('--font-family-base', font);
+    localStorage.setItem('font', font);
+}
+
+// Page load hone pe saved font apply karo
+document.addEventListener('DOMContentLoaded', function() {
+    const selector = document.getElementById('fontSelector');
+    const savedFont = localStorage.getItem('font');
+    if(savedFont) {
+        document.documentElement.style.setProperty('--font-family-base', savedFont);
+        if(selector) selector.value = savedFont;
+    }
+});
+</script>
+
 <?php $__env->stopPush(); ?>
 <?php /**PATH /var/www/lms-laravel/resources/views/web/default/includes/top_nav.blade.php ENDPATH**/ ?>
