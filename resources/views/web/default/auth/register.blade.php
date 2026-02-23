@@ -11,6 +11,15 @@
         $showOtherRegisterMethod = getFeaturesSettings('show_other_register_method') ?? false;
         $showCertificateAdditionalInRegister = getFeaturesSettings('show_certificate_additional_in_register') ?? false;
         $selectRolesDuringRegistration = getFeaturesSettings('select_the_role_during_registration') ?? null;
+        /*
+        added by Anjali for the remove the role organization on 12-2-26
+        */
+        if (!empty($selectRolesDuringRegistration) && is_array($selectRolesDuringRegistration)) {
+        $selectRolesDuringRegistration = array_filter(
+        $selectRolesDuringRegistration,
+        fn($role) => $role !== 'organization'
+        );
+       }
     @endphp
 
     <div class="container">
