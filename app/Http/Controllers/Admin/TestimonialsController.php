@@ -43,7 +43,7 @@ class TestimonialsController extends Controller
         $this->authorize('admin_testimonials_create');
 
         $this->validate($request, [
-            'user_avatar' => 'required|string',
+            'user_avatar' => 'nullable|string',
             'user_name' => 'required|string',
             'user_bio' => 'required|string',
             'rate' => 'required|integer|between:0,5',
@@ -96,7 +96,7 @@ class TestimonialsController extends Controller
         $this->authorize('admin_testimonials_edit');
 
         $this->validate($request, [
-            'user_avatar' => 'required|string',
+            'user_avatar' => 'nullable|string',
             'user_name' => 'required|string',
             'user_bio' => 'required|string',
             'rate' => 'required|integer|between:0,5',

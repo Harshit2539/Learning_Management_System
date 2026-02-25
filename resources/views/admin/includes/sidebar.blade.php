@@ -94,6 +94,7 @@
                     </ul>
                 </li>
             @endcan()
+             <!-- Anjali jaiswal on 25 feb 
 
             @can('admin_bundles')
                 <li class="nav-item dropdown {{ (request()->is(getAdminPanelUrl('/bundles*', false)) and !request()->is(getAdminPanelUrl('/bundles/comments*', false))) ? 'active' : '' }}">
@@ -115,7 +116,7 @@
                         @endcan()
                     </ul>
                 </li>
-            @endcan()
+            @endcan()--->
 
             @can('admin_upcoming_courses')
                 <li class="nav-item dropdown {{ (request()->is(getAdminPanelUrl('/upcoming_courses*', false)) and !request()->is(getAdminPanelUrl('/upcoming_courses/comments*', false))) ? 'active' : '' }}">
@@ -402,7 +403,7 @@
                 </li>
             @endcan
 
-
+<!----Anjali jaiswal on 25 feb
             @can('admin_users_not_access_content_lists')
                 <li class="{{ (request()->is(getAdminPanelUrl('/users/not-access-to-content', false))) ? 'active' : '' }}">
                     <a class="nav-link" href="{{ getAdminPanelUrl() }}/users/not-access-to-content">
@@ -410,6 +411,7 @@
                     </a>
                 </li>
             @endcan
+            ---->
 
             @can('admin_roles')
                 <li class="nav-item dropdown {{ (request()->is(getAdminPanelUrl('/roles*', false))) ? 'active' : '' }}">
