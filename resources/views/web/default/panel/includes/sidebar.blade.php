@@ -242,7 +242,7 @@
                 </li>
             @endcan
         @endif
-
+<!-----Anjali jaiswal on 25 feb
         @if($authUser->isOrganization() or $authUser->isTeacher())
             @can('panel_bundles')
                 <li class="sidenav-item {{ (request()->is('panel/bundles') or request()->is('panel/bundles/*')) ? 'sidenav-item-active' : '' }}">
@@ -271,7 +271,7 @@
                 </li>
             @endcan
         @endif
-
+------>
         @if(getFeaturesSettings('webinar_assignment_status'))
             @can('panel_assignments')
                 <li class="sidenav-item {{ (request()->is('panel/assignments') or request()->is('panel/assignments/*')) ? 'sidenav-item-active' : '' }}">
