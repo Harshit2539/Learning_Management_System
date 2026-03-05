@@ -520,7 +520,8 @@
                                 </li>
                             @endcan
                         @endif
-
+                        <!---if not teacher than apply add on 5-3-36--->
+                        @if(!$authUser->isTeacher())
                         @can('panel_financial_summary')
                             <li class="mt-5 {{ (request()->is('panel/financial/summary')) ? 'active' : '' }}">
                                 <a href="/panel/financial/summary">{{ trans('financial.financial_summary') }}</a>
@@ -544,7 +545,8 @@
                                 <a href="/panel/financial/subscribes">{{ trans('financial.subscribes') }}</a>
                             </li>
                         @endcan
-
+                        @endif
+                        <!-----end------->
                         @if(($authUser->isOrganization() || $authUser->isTeacher()) and getRegistrationPackagesGeneralSettings('status'))
                             @can("panel_financial_registration_packages")
                                 <li class="mt-5 {{ (request()->is('panel/financial/registration-packages')) ? 'active' : '' }}">
