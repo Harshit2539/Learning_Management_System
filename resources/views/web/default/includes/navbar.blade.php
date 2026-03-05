@@ -94,13 +94,27 @@
                         </li>
                     @endif
 
-                    @if(!empty($navbarPages) and count($navbarPages))
+                    <!--Anjali 5-3-26-- @if(!empty($navbarPages) and count($navbarPages))
                         @foreach($navbarPages as $navbarPage)
                             <li class="nav-item">
                                 <a class="nav-link" href="{{ $navbarPage['link'] }}">{{ $navbarPage['title'] }}</a>
                             </li>
                         @endforeach
-                    @endif
+                    @endif -->
+
+                      @if(!empty($navbarPages) && count($navbarPages))
+    @foreach($navbarPages as $navbarPage)
+
+        @if(!Str::contains($navbarPage['link'], 'forums'))
+            <li class="nav-item">
+                <a class="nav-link" href="{{ $navbarPage['link'] }}">
+                    {{ $navbarPage['title'] }}
+                </a>
+            </li>
+        @endif
+
+    @endforeach
+@endif
                 </ul>
             </div>
 

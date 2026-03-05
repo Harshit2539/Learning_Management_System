@@ -55,7 +55,7 @@
                                 <option selected disabled>{{ trans('update.select_role') }}</option>
 
                                 <option value="{{ \App\Models\Role::$teacher }}" {{ $isInstructorRole ? 'selected' : '' }}>{{ trans('panel.teacher') }}</option>
-                                <option value="{{ \App\Models\Role::$organization }}" {{ $isOrganizationRole ? 'selected' : '' }}>{{ trans('home.organization') }}</option>
+                                <!-- anjali 5-3-26---<option value="{{ \App\Models\Role::$organization }}" {{ $isOrganizationRole ? 'selected' : '' }}>{{ trans('home.organization') }}</option> -->
                             </select>
                             @error('role')
                             <div class="invalid-feedback">
