@@ -1,7 +1,8 @@
 <div class="main-sidebar">
     <aside id="sidebar-wrapper">
-        <div class="sidebar-brand">
-            <a href="/">
+        <div class="sidebar-brand" style="border-bottom: 1px solid lightgray;padding: 20px 0px; height:80px !important; line-height:80px !important;">
+            <a href="/" style="line-height: 20px;">
+ 
                 @if(!empty($generalSettings['site_name']))
                     {{ strtoupper($generalSettings['site_name']) }}
                 @else
@@ -10,7 +11,7 @@
             </a>
         </div>
         <div class="sidebar-brand sidebar-brand-sm">
-            <a href="/">
+            <a href="/" style="line-height: 20px;">
                 @if(!empty($generalSettings['site_name']))
                     {{ strtoupper(substr($generalSettings['site_name'],0,2)) }}
                 @endif
@@ -77,11 +78,13 @@
                             </li>
                         @endcan()
 
+                        <!-- Anjali jaiswal on 17 march
+                        
                         @can('admin_agora_history_list')
                             <li class="{{ (request()->is(getAdminPanelUrl('/agora_history', false))) ? 'active' : '' }}">
                                 <a class="nav-link" href="{{ getAdminPanelUrl() }}/agora_history">{{ trans('update.agora_history') }}</a>
                             </li>
-                        @endcan
+                        @endcan -->
 
                         @can('admin_course_personal_notes')
                             @if(!empty(getFeaturesSettings('course_notes_status')))
@@ -118,6 +121,8 @@
                 </li>
             @endcan()--->
 
+            <!-- Anjali jaiswal on 17 March 
+            
             @can('admin_upcoming_courses')
                 <li class="nav-item dropdown {{ (request()->is(getAdminPanelUrl('/upcoming_courses*', false)) and !request()->is(getAdminPanelUrl('/upcoming_courses/comments*', false))) ? 'active' : '' }}">
                     <a href="#" class="nav-link has-dropdown" data-toggle="dropdown">
@@ -139,18 +144,18 @@
 
                     </ul>
                 </li>
-            @endcan()
+            @endcan() -->
 
-            @can('admin_quizzes')
+            <!-- @can('admin_quizzes')
                 <li class="{{ (request()->is(getAdminPanelUrl('/quizzes*', false))) ? 'active' : '' }}">
                     <a class="nav-link " href="{{ getAdminPanelUrl() }}/quizzes">
                         <i class="fas fa-file"></i>
                         <span>{{ trans('admin/main.quizzes') }}</span>
                     </a>
                 </li>
-            @endcan()
+            @endcan() -->
 
-            @can('admin_certificate')
+            <!-- @can('admin_certificate')
                 <li class="nav-item dropdown {{ (request()->is(getAdminPanelUrl('/certificates*', false))) ? 'active' : '' }}">
                     <a href="#" class="nav-link has-dropdown" data-toggle="dropdown">
                         <i class="fas fa-certificate"></i>
@@ -191,17 +196,17 @@
                         @endcan
                     </ul>
                 </li>
-            @endcan
+            @endcan -->
 
-            @can('admin_webinar_assignments')
+            <!-- @can('admin_webinar_assignments')
                 <li class="{{ (request()->is(getAdminPanelUrl('/assignments', false))) ? 'active' : '' }}">
                     <a href="{{ getAdminPanelUrl() }}/assignments" class="nav-link">
                         <i class="fas fa-pen"></i>
                         <span>{{ trans('update.assignments') }}</span>
                     </a>
                 </li>
-            @endcan
-
+            @endcan -->
+<!-- 
             @can('admin_course_question_forum_list')
                 <li class="{{ (request()->is(getAdminPanelUrl('/webinars/course_forums', false))) ? 'active' : '' }}">
                     <a class="nav-link " href="{{ getAdminPanelUrl() }}/webinars/course_forums">
@@ -209,9 +214,9 @@
                         <span>{{ trans('update.course_forum') }}</span>
                     </a>
                 </li>
-            @endcan()
+            @endcan() -->
 
-            @can('admin_course_noticeboards_list')
+            <!-- @can('admin_course_noticeboards_list')
                 <li class="nav-item dropdown {{ (request()->is(getAdminPanelUrl('/course-noticeboards*', false))) ? 'active' : '' }}">
                     <a href="#" class="nav-link has-dropdown" data-toggle="dropdown">
                         <i class="fas fa-clipboard-check"></i>
@@ -231,9 +236,9 @@
                         @endcan
                     </ul>
                 </li>
-            @endcan
+            @endcan -->
 
-            @can('admin_enrollment')
+            <!-- @can('admin_enrollment')
                 <li class="nav-item dropdown {{ (request()->is(getAdminPanelUrl('/enrollments*', false))) ? 'active' : '' }}">
                     <a href="#" class="nav-link has-dropdown" data-toggle="dropdown">
                         <i class="fas fa-user-plus"></i>
@@ -253,8 +258,8 @@
                         @endcan
                     </ul>
                 </li>
-            @endcan
-
+            @endcan -->
+<!-- 
             @can('admin_waitlists_lists')
                 <li class="{{ (request()->is(getAdminPanelUrl('/waitlists', false))) ? 'active' : '' }}">
                     <a href="{{ getAdminPanelUrl("/waitlists") }}" class="nav-link">
@@ -262,7 +267,7 @@
                         <span>{{ trans('update.waitlists') }}</span>
                     </a>
                 </li>
-            @endcan
+            @endcan -->
 
             @can('admin_categories')
                 <li class="nav-item dropdown {{ (request()->is(getAdminPanelUrl('/categories*', false))) ? 'active' : '' }}">
@@ -325,7 +330,7 @@
 
 
 
-            @if($authUser->can('admin_consultants_lists') or
+            <!-- @if($authUser->can('admin_consultants_lists') or
                 $authUser->can('admin_appointments_lists')
             )
                 <li class="menu-header">{{ trans('site.appointments') }}</li>
@@ -338,16 +343,16 @@
                         <span>{{ trans('admin/main.consultants') }}</span>
                     </a>
                 </li>
-            @endcan
+            @endcan -->
 
-            @can('admin_appointments_lists')
+            <!-- @can('admin_appointments_lists')
                 <li class="{{ (request()->is(getAdminPanelUrl('/appointments', false))) ? 'active' : '' }}">
                     <a class="nav-link" href="{{ getAdminPanelUrl() }}/appointments">
                         <i class="fas fa-address-book"></i>
                         <span>{{ trans('admin/main.appointments') }}</span>
                     </a>
                 </li>
-            @endcan
+            @endcan -->
 
             @if($authUser->can('admin_users') or
                 $authUser->can('admin_roles') or
@@ -388,11 +393,11 @@
                             </li>
                         @endcan()
 
-                        @can('admin_organizations_list')
+                        <!-- @can('admin_organizations_list')
                             <li class="{{ (request()->is(getAdminPanelUrl('/organizations', false))) ? 'active' : '' }}">
                                 <a class="nav-link" href="{{ getAdminPanelUrl() }}/organizations">{{ trans('admin/main.organizations') }}</a>
                             </li>
-                        @endcan()
+                        @endcan() -->
 
                         @can('admin_users_create')
                             <li class="{{ (request()->is(getAdminPanelUrl('/users/create', false))) ? 'active' : '' }}">
@@ -478,11 +483,11 @@
                             </a>
                         </li>
 
-                        <li class="{{ (request()->is(getAdminPanelUrl('/users/become-instructors/organizations', false))) ? 'active' : '' }}">
+                        <!-- <li class="{{ (request()->is(getAdminPanelUrl('/users/become-instructors/organizations', false))) ? 'active' : '' }}">
                             <a class="nav-link" href="{{ getAdminPanelUrl() }}/users/become-instructors/organizations">
                                 <span>{{ trans('admin/main.organizations') }}</span>
                             </a>
-                        </li>
+                        </li> -->
                     </ul>
                 </li>
             @endcan()
@@ -496,7 +501,7 @@
                 </li>
             @endcan
 
-            @if($authUser->can("admin_user_login_history") or $authUser->can("admin_user_ip_restriction"))
+            <!-- @if($authUser->can("admin_user_login_history") or $authUser->can("admin_user_ip_restriction"))
                 <li class="nav-item dropdown {{ (request()->is(getAdminPanelUrl('/users/login-history*', false)) or request()->is(getAdminPanelUrl('/users/ip-restriction*', false))) ? 'active' : '' }}">
                     <a href="#" class="nav-link has-dropdown" data-toggle="dropdown">
                         <i class="fas fa-user-clock"></i>
@@ -520,10 +525,10 @@
                         @endcan
                     </ul>
                 </li>
-            @endif
+            @endif -->
 
 
-            @if(
+            <!-- @if(
                 $authUser->can('admin_forum') or
                 $authUser->can('admin_featured_topics')
                 )
@@ -549,9 +554,9 @@
                         @endcan()
                     </ul>
                 </li>
-            @endcan()
+            @endcan() -->
 
-            @can('admin_featured_topics')
+            <!-- @can('admin_featured_topics')
                 <li class="nav-item dropdown {{ (request()->is(getAdminPanelUrl('/featured-topics*', false))) ? 'active' : '' }}">
                     <a href="#" class="nav-link has-dropdown" data-toggle="dropdown">
                         <i class="fas fa-comment"></i>
@@ -570,9 +575,9 @@
                         @endcan()
                     </ul>
                 </li>
-            @endcan()
+            @endcan() -->
 
-            @can('admin_recommended_topics')
+            <!-- @can('admin_recommended_topics')
                 <li class="nav-item dropdown {{ (request()->is(getAdminPanelUrl('/recommended-topics*', false))) ? 'active' : '' }}">
                     <a href="#" class="nav-link has-dropdown" data-toggle="dropdown">
                         <i class="fas fa-thumbs-up"></i>
@@ -591,7 +596,7 @@
                         @endcan()
                     </ul>
                 </li>
-            @endcan()
+            @endcan() -->
 
             @if($authUser->can('admin_supports') or
                 $authUser->can('admin_comments') or
@@ -719,7 +724,7 @@
                 </li>
             @endcan
 
-            @can('admin_noticeboards')
+            <!-- @can('admin_noticeboards')
                 <li class="nav-item dropdown {{ (request()->is(getAdminPanelUrl('/noticeboards*', false))) ? 'active' : '' }}">
                     <a href="#" class="nav-link has-dropdown"><i class="fas fa-sticky-note"></i> <span>{{ trans('admin/main.noticeboard') }}</span></a>
                     <ul class="dropdown-menu">
@@ -736,7 +741,7 @@
                         @endcan
                     </ul>
                 </li>
-            @endcan
+            @endcan -->
 
             @can('admin_notifications')
                 <li class="nav-item dropdown {{ (request()->is(getAdminPanelUrl('/notifications*', false))) ? 'active' : '' }}">
@@ -792,7 +797,7 @@
                 <li class="menu-header">{{ trans('admin/main.content') }}</li>
             @endif
 
-            @can('admin_store')
+            <!-- @can('admin_store')
                 <li class="nav-item dropdown {{ (request()->is(getAdminPanelUrl('/store*', false)) or request()->is(getAdminPanelUrl('/comments/products*', false))) ? 'active' : '' }}">
                     <a href="#" class="nav-link has-dropdown" data-toggle="dropdown">
                         <i class="fas fa-store-alt"></i>
@@ -885,7 +890,7 @@
                         @endcan
                     </ul>
                 </li>
-            @endcan
+            @endcan -->
 
             @can('admin_blog')
                 <li class="nav-item dropdown {{ (request()->is(getAdminPanelUrl('/blog*', false)) and !request()->is(getAdminPanelUrl('/blog/comments', false))) ? 'active' : '' }}">
@@ -1719,14 +1724,14 @@
                 <li class="menu-header">{{ trans('admin/main.settings') }}</li>
             @endif
 
-            @can('admin_translator')
+            <!-- @can('admin_translator')
                 <li class="nav-item {{ (request()->is(getAdminPanelUrl('/translator*', false))) ? 'active' : '' }}">
                     <a href="{{ getAdminPanelUrl() }}/translator" class="nav-link">
                         <i class="fa fa-language"></i>
                         <span>{{ trans('update.translator') }}</span>
                     </a>
                 </li>
-            @endcan
+            @endcan -->
 
             @can('admin_settings')
                 @php
