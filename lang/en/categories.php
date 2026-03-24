@@ -8,7 +8,7 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'categories' => 'Categories',
+    'categories' => 'Programs',
     'edit_page_title' => 'Edit',
 
 
