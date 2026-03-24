@@ -411,7 +411,7 @@ class WebinarsController extends Controller
     }
 
     public function update(Request $request, $id)
-    {
+    { 
         $user = auth()->user();
 
         if (!$user->isTeacher() and !$user->isOrganization()) {

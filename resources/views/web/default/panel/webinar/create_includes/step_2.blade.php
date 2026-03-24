@@ -1,4 +1,5 @@
 @push('styles_top')
+
     <link rel="stylesheet" href="/assets/default/vendors/daterangepicker/daterangepicker.min.css">
     <link rel="stylesheet" href="/assets/default/vendors/select2/select2.min.css">
     <link rel="stylesheet" href="/assets/default/vendors/bootstrap-tagsinput/bootstrap-tagsinput.min.css">
@@ -167,8 +168,8 @@
             <input type="text" name="tags" data-max-tag="5" value="{{ !empty($webinar) ? implode(',',$webinarTags) : '' }}" class="form-control inputtags" placeholder="{{ trans('public.type_tag_name_and_press_enter') }} ({{ trans('forms.max') }} : 5)"/>
         </div>
 
-
-        <div class="form-group mt-15">
+      {{-- chnages on 23 3 26 --}}
+   {{-- <div class="form-group mt-15">
             <label class="input-label">{{ trans('public.category') }}</label>
 
             <select id="categories" class="custom-select @error('category_id')  is-invalid @enderror" name="category_id" required>
@@ -190,12 +191,50 @@
                 {{ $message }}
             </div>
             @enderror
+        </div> --}}
+
+        <div class="form-group mt-15">
+            <label class="input-label">{{ trans('public.category') }}</label>
+ 
+            <select id="categories"
+                    name="category_id[]"
+                    class="custom-select @error('category_id') is-invalid @enderror"
+                    multiple="multiple"
+                    required>
+ 
+                @foreach($categories as $category)
+                    @if(!empty($category->subCategories) && $category->subCategories->count() > 0)
+                        <optgroup label="{{ $category->title }}">
+                            @foreach($category->subCategories as $subCategory)
+                                <option value="{{ $subCategory->id }}"
+                                    {{ (isset($webinar) && in_array($subCategory->id, $webinar->categories->pluck('id')->toArray()))
+                                    || (is_array(old('category_id')) && in_array($subCategory->id, old('category_id'))) ? 'selected' : '' }}>
+                                    {{ $subCategory->title }}
+                                </option>
+                            @endforeach
+                        </optgroup>
+                    @else
+                        <option value="{{ $category->id }}"
+                            {{ (isset($webinar) && in_array($category->id, $webinar->categories->pluck('id')->toArray()))
+                            || (is_array(old('category_id')) && in_array($category->id, old('category_id'))) ? 'selected' : '' }}>
+                            {{ $category->title }}
+                        </option>
+                    @endif
+                @endforeach
+ 
+            </select>
+ 
+            @error('category_id')
+                <div class="invalid-feedback">{{ $message }}</div>
+            @enderror
         </div>
+
+        
 
     </div>
 </div>
 
-<div class="form-group mt-15 {{ (!empty($webinarCategoryFilters) and count($webinarCategoryFilters)) ? '' : 'd-none' }}" id="categoriesFiltersContainer">
+<!--Anjali 24-3-26 <div class="form-group mt-15 {{ (!empty($webinarCategoryFilters) and count($webinarCategoryFilters)) ? '' : 'd-none' }}" id="categoriesFiltersContainer">
     <span class="input-label d-block">{{ trans('public.category_filters') }}</span>
     <div id="categoriesFiltersCard" class="row mt-20">
 
@@ -229,8 +268,37 @@
         @endif
 
     </div>
-</div>
-
+</div> -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+ 
+    <script>
+    $(document).ready(function() {
+        $('#categories').select2({
+            placeholder: "Select Categories",
+            allowClear: true,
+            width: '100%'
+        });
+    });
+    </script>
+ 
+    <!-- Optional Styling -->
+    <style>
+    .select2-container--default .select2-selection--multiple {
+        min-height: 45px;
+        border-radius: 8px;
+        padding: 5px;
+    }
+ 
+    .select2-selection__choice {
+        background-color: #aac2abff !important;
+        color: #fff !important;
+        border: none !important;
+        padding: 3px 8px !important;
+        border-radius: 5px !important;
+    }
+    </style>
 @push('scripts_bottom')
     <script src="/assets/default/vendors/select2/select2.min.js"></script>
     <script src="/assets/default/vendors/moment.min.js"></script>

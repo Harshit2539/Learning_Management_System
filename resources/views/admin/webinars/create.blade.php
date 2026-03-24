@@ -495,7 +495,7 @@
                                             </div>
 
 
-                                            <div class="form-group mt-15">
+                                            <!-- <div class="form-group mt-15">
                                                 <label class="input-label">{{ trans('public.category') }}</label>
 
                                                 <select id="categories" class="custom-select @error('category_id')  is-invalid @enderror" name="category_id" required>
@@ -518,12 +518,56 @@
                                                     {{ $message }}
                                                 </div>
                                                 @enderror
-                                            </div>
+                                            </div> -->
+
+                                           <div class="form-group mt-15">
+    <label class="input-label">{{ trans('public.category') }}</label>
+
+   <select id="categories"
+        class="custom-select select2 @error('category_id') is-invalid @enderror"
+        name="category_id[]"
+        multiple
+        required>
+
+    @foreach($categories as $category)
+
+        @if(!empty($category->subCategories) && count($category->subCategories))
+
+            <optgroup label="{{ $category->title }}">
+
+                @foreach($category->subCategories as $subCategory)
+                    <option value="{{ $subCategory->id }}"
+                        {{ in_array($subCategory->id, $selectedCategoryIds ?? []) ? 'selected' : '' }}>
+                        {{ $subCategory->title }}
+                    </option>
+                @endforeach
+
+            </optgroup>
+
+        @else
+
+            <option value="{{ $category->id }}"
+                {{ in_array($category->id, $selectedCategoryIds ?? []) ? 'selected' : '' }}>
+                {{ $category->title }}
+            </option>
+
+        @endif
+
+    @endforeach
+
+</select>
+
+    @error('category_id')
+    <div class="invalid-feedback">
+        {{ $message }}
+    </div>
+    @enderror
+</div>
 
                                         </div>
                                     </div>
 
-                                    <div class="form-group mt-15 {{ (!empty($webinarCategoryFilters) and count($webinarCategoryFilters)) ? '' : 'd-none' }}" id="categoriesFiltersContainer">
+                                    <!--Anjali 24-3-26.  <div class="form-group mt-15 {{ (!empty($webinarCategoryFilters) and count($webinarCategoryFilters)) ? '' : 'd-none' }}" id="categoriesFiltersContainer">
                                         <span class="input-label d-block">{{ trans('public.category_filters') }}</span>
                                         <div id="categoriesFiltersCard" class="row mt-3">
 
@@ -549,7 +593,7 @@
                                             @endif
 
                                         </div>
-                                    </div>
+                                    </div> -->
                                 </section>
 
                                 @if(!empty($webinar))

@@ -661,7 +661,56 @@ class WebinarController extends Controller
             if ($data['category_id'] !== $webinar->category_id) {
                 WebinarFilterOption::where('webinar_id', $webinar->id)->delete();
             }
+
+            /////Ayush 23-3-36   added /////////
+
+
+                 if (!empty($data['category_id']) && is_array($data['category_id'])) {
+ 
+            // Current DB categories
+            $existingCategoryIds = \DB::table('category_mapping')
+                ->where('webinar_id', $webinar->id)
+                ->pluck('category_id')
+                ->toArray();
+ 
+            // Incoming categories
+            $newCategoryIds = $data['category_id'];
+ 
+            // ================= DELETE removed categories =================
+            $deleteIds = array_diff($existingCategoryIds, $newCategoryIds);
+ 
+            if (!empty($deleteIds)) {
+                \DB::table('category_mapping')
+                    ->where('webinar_id', $webinar->id)
+                    ->whereIn('category_id', $deleteIds)
+                    ->delete();
+            }
+ 
+            // ================= INSERT new categories =================
+            $insertIds = array_diff($newCategoryIds, $existingCategoryIds);
+ 
+            $insertData = [];
+ 
+            foreach ($insertIds as $catId) {
+                $insertData[] = [
+                    'webinar_id' => $webinar->id,
+                    'category_id' => $catId,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
+ 
+            if (!empty($insertData)) {
+                \DB::table('category_mapping')->insert($insertData);
+            }
         }
+ 
+            // 🔥 IMPORTANT FIX
+            $data['category_id'] = null;
+            //////End/////////////
+        }
+
+        
 
         if ($currentStep == 3) {
             $data['subscribe'] = !empty($data['subscribe']) ? true : false;
