@@ -243,6 +243,8 @@
                                     <tr>
                                         <th>{{trans('admin/main.id')}}</th>
                                         <th class="text-left">{{trans('admin/main.title')}}</th>
+                                         <th class="text-left">{{trans('admin/main.category')}}</th>
+
                                         <th class="text-left">{{trans('admin/main.instructor')}}</th>
                                         <th>{{trans('admin/main.price')}}</th>
                                         <th>{{trans('admin/main.sales')}}</th>
@@ -263,13 +265,24 @@
                                             <td>{{ $webinar->id }}</td>
                                             <td width="18%" class="text-left">
                                                 <a class="text-primary mt-0 mb-1 font-weight-bold" href="{{ $webinar->getUrl() }}">{{ $webinar->title }}</a>
-                                                @if(!empty($webinar->category->title))
+                                                <!-- Anjali  23-3-26 @if(!empty($webinar->category->title))
                                                     <div class="text-small">{{ $webinar->category->title }}</div>
                                                 @else
                                                     <div class="text-small text-warning">{{trans('admin/main.no_category')}}</div>
-                                                @endif
+                                                @endif -->
+                                              
                                             </td>
-
+                                           <td class="text-left">
+                                               @if(!empty($webinar->mappedCategories) && count($webinar->mappedCategories) > 0)
+                                             <div class="text-small">
+                                           {{ implode(', ', array_map(fn($cat) => ucwords($cat), $webinar->mappedCategories)) }}
+                                         </div>
+                                          @else
+                                             <div class="text-small text-warning">
+                                     {{ trans('admin/main.no_category') }}
+                                        </div>
+                                     @endif
+                                      </td>
                                             <td class="text-left">{{ $webinar->teacher->full_name }}</td>
 
                                             <td>

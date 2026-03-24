@@ -62,10 +62,15 @@ class Category extends Model implements TranslatableContract
         return $this->hasMany('App\Models\Filter', 'category_id', 'id');
     }
 
-    public function webinars()
-    {
-        return $this->hasMany('App\Models\Webinar', 'category_id', 'id');
-    }
+  public function webinars()
+{
+    return $this->belongsToMany(
+        Webinar::class,      // Related model
+        'category_mapping',  // Pivot table
+        'category_id',       // This model's foreign key in pivot
+        'webinar_id'         // Related model's foreign key in pivot
+    );
+}
 
     public function userOccupations()
     {

@@ -1142,5 +1142,13 @@ class Webinar extends Model implements TranslatableContract
 
         return $count;
     }
-
+public function categories()
+{
+    return $this->belongsToMany(
+        Category::class,          // Related model
+        'category_mapping',       // Pivot table
+        'webinar_id',             // This model's foreign key
+        'category_id'             // Related model's foreign key
+    );
+}
 }

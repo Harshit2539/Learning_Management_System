@@ -44,6 +44,21 @@ class ClassesController extends Controller
         $webinars = $webinarsQuery->with([
             'tickets'
         ])->paginate(6);
+        ////Ayush ///////////
+        $allMappings = \DB::table('category_mapping')
+            ->whereIn('webinar_id', $webinars->pluck('id'))
+            ->get()
+            ->groupBy('webinar_id');
+ 
+        $webinars->getCollection()->transform(function ($webinar) use ($allMappings) {
+ 
+            $webinar->category_ids = isset($allMappings[$webinar->id])
+                ? $allMappings[$webinar->id]->pluck('category_id')->toArray()
+                : [];
+ 
+            return $webinar;
+        });
+        /////End Ayush ///////////
 
         $seoSettings = getSeoMetas('classes');
         $pageTitle = $seoSettings['title'] ?? '';

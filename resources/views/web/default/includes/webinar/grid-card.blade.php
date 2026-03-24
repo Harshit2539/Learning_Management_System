@@ -51,9 +51,28 @@
                 <h3 class="mt-15 webinar-title font-weight-bold font-16 text-dark-blue">{{ clean($webinar->title,'title') }}</h3>
             </a>
 
-            @if(!empty($webinar->category))
+          
+            {{--@if(!empty($webinar->category))
                 <span class="d-block font-14 mt-10">{{ trans('public.in') }} <a href="{{ $webinar->category->getUrl() }}" target="_blank" class="text-decoration-underline">{{ $webinar->category->title }}</a></span>
-            @endif
+            @endif--}}
+             
+            {{--Add by ayush--}}
+ 
+                @if(!empty($webinar->categories) && $webinar->categories->count())
+                        <span class="d-block font-14 mt-10">
+                            {{ trans('public.in') }}
+ 
+                            @foreach($webinar->categories as $category)
+                                <a href="{{ $category->getUrl() }}"
+                                target="_blank"
+                                class="text-decoration-underline">
+                                
+                                {{ $category->title }}
+                                </a>@if(!$loop->last), @endif
+                            @endforeach
+ 
+                        </span>
+                @endif
 
             @include(getTemplate() . '.includes.webinar.rate',['rate' => $webinar->getRate()])
 

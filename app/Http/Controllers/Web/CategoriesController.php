@@ -16,94 +16,185 @@ use Illuminate\Support\Facades\DB;
 
 class CategoriesController extends Controller
 {
+    // public function index(Request $request, $categorySlug, $subCategorySlug = null)
+    // {
+
+    //     if (!empty($categorySlug)) {
+
+    //         $categoryQuery = Category::query()->where('slug', $categorySlug);
+
+    //         if (!empty($subCategorySlug)) {
+    //             $categoryQuery = Category::query()->where('slug', $subCategorySlug);
+    //         }
+
+    //         $category = $categoryQuery->withCount('webinars')
+    //             ->with(['filters' => function ($query) {
+    //                 $query->with('options');
+    //             }])->first();
+
+    //         if (!empty($category)) {
+    //             $categoryIds = [$category->id];
+
+    //             if (!empty($category->subCategories) and count($category->subCategories)) {
+    //                 $categoryIds = array_merge($categoryIds, $category->subCategories->pluck('id')->toArray());
+    //             }
+
+    //             $featureWebinars = FeatureWebinar::whereIn('page', ['categories', 'home_categories'])
+    //                 ->where('status', 'publish')
+    //                 ->whereHas('webinar', function ($q) use ($categoryIds) {
+    //                     $q->where('status', Webinar::$active);
+    //                     $q->whereHas('category', function ($q) use ($categoryIds) {
+    //                         $q->whereIn('id', $categoryIds);
+    //                     });
+    //                 })
+    //                 ->with(['webinar' => function ($query) {
+    //                     $query->with(['teacher' => function ($qu) {
+    //                         $qu->select('id', 'full_name', 'avatar');
+    //                     }, 'reviews', 'tickets', 'feature']);
+    //                 }])
+    //                 ->orderBy('updated_at', 'desc')
+    //                 ->get();
+
+
+    //             $webinarsQuery = Webinar::where('webinars.status', 'active')
+    //                 ->where('private', false)
+    //                 ->whereIn('category_id', $categoryIds);
+
+    //             $classesController = new ClassesController();
+    //             $moreOptions = $request->get('moreOptions');
+    //             $tableName = 'webinars';
+
+    //             if (!empty($moreOptions) and is_array($moreOptions) and in_array('bundles', $moreOptions)) {
+    //                 $webinarsQuery = Bundle::where('bundles.status', 'active')
+    //                     ->whereIn('category_id', $categoryIds);
+
+    //                 $tableName = 'bundles';
+    //                 $classesController->tableName = 'bundles';
+    //                 $classesController->columnId = 'bundle_id';
+    //             }
+
+    //             $webinarsQuery = $classesController->handleFilters($request, $webinarsQuery);
+
+    //             $sort = $request->get('sort', null);
+
+    //             if (empty($sort)) {
+    //                 $webinarsQuery = $webinarsQuery->orderBy("{$tableName}.created_at", 'desc');
+    //             }
+
+    //             $webinars = $webinarsQuery->with(['tickets'])
+    //                 ->paginate(6);
+
+    //             $seoSettings = getSeoMetas('categories');
+    //             $pageTitle = !empty($seoSettings['title']) ? $seoSettings['title'] : trans('site.categories_page_title');
+    //             $pageDescription = !empty($seoSettings['description']) ? $seoSettings['description'] : trans('site.categories_page_title');
+    //             $pageRobot = getPageRobot('categories');
+
+    //             $data = [
+    //                 'pageTitle' => $pageTitle,
+    //                 'pageDescription' => $pageDescription,
+    //                 'pageRobot' => $pageRobot,
+    //                 'category' => $category,
+    //                 'webinars' => $webinars,
+    //                 'featureWebinars' => $featureWebinars,
+    //                 'webinarsCount' => $webinars->total(),
+    //                 'sortFormAction' => $category->getUrl(),
+    //             ];
+
+    //             return view(getTemplate() . '.pages.categories', $data);
+    //         }
+    //     }
+
+    //     abort(404);
+    // }
+
+
+
+    //ayush
+
     public function index(Request $request, $categorySlug, $subCategorySlug = null)
-    {
-
-        if (!empty($categorySlug)) {
-
-            $categoryQuery = Category::query()->where('slug', $categorySlug);
-
-            if (!empty($subCategorySlug)) {
-                $categoryQuery = Category::query()->where('slug', $subCategorySlug);
-            }
-
-            $category = $categoryQuery->withCount('webinars')
-                ->with(['filters' => function ($query) {
-                    $query->with('options');
-                }])->first();
-
-            if (!empty($category)) {
-                $categoryIds = [$category->id];
-
-                if (!empty($category->subCategories) and count($category->subCategories)) {
-                    $categoryIds = array_merge($categoryIds, $category->subCategories->pluck('id')->toArray());
-                }
-
-                $featureWebinars = FeatureWebinar::whereIn('page', ['categories', 'home_categories'])
-                    ->where('status', 'publish')
-                    ->whereHas('webinar', function ($q) use ($categoryIds) {
-                        $q->where('status', Webinar::$active);
-                        $q->whereHas('category', function ($q) use ($categoryIds) {
-                            $q->whereIn('id', $categoryIds);
-                        });
-                    })
-                    ->with(['webinar' => function ($query) {
-                        $query->with(['teacher' => function ($qu) {
-                            $qu->select('id', 'full_name', 'avatar');
-                        }, 'reviews', 'tickets', 'feature']);
-                    }])
-                    ->orderBy('updated_at', 'desc')
-                    ->get();
-
-
-                $webinarsQuery = Webinar::where('webinars.status', 'active')
-                    ->where('private', false)
-                    ->whereIn('category_id', $categoryIds);
-
-                $classesController = new ClassesController();
-                $moreOptions = $request->get('moreOptions');
-                $tableName = 'webinars';
-
-                if (!empty($moreOptions) and is_array($moreOptions) and in_array('bundles', $moreOptions)) {
-                    $webinarsQuery = Bundle::where('bundles.status', 'active')
-                        ->whereIn('category_id', $categoryIds);
-
-                    $tableName = 'bundles';
-                    $classesController->tableName = 'bundles';
-                    $classesController->columnId = 'bundle_id';
-                }
-
-                $webinarsQuery = $classesController->handleFilters($request, $webinarsQuery);
-
-                $sort = $request->get('sort', null);
-
-                if (empty($sort)) {
-                    $webinarsQuery = $webinarsQuery->orderBy("{$tableName}.created_at", 'desc');
-                }
-
-                $webinars = $webinarsQuery->with(['tickets'])
-                    ->paginate(6);
-
-                $seoSettings = getSeoMetas('categories');
-                $pageTitle = !empty($seoSettings['title']) ? $seoSettings['title'] : trans('site.categories_page_title');
-                $pageDescription = !empty($seoSettings['description']) ? $seoSettings['description'] : trans('site.categories_page_title');
-                $pageRobot = getPageRobot('categories');
-
-                $data = [
-                    'pageTitle' => $pageTitle,
-                    'pageDescription' => $pageDescription,
-                    'pageRobot' => $pageRobot,
-                    'category' => $category,
-                    'webinars' => $webinars,
-                    'featureWebinars' => $featureWebinars,
-                    'webinarsCount' => $webinars->total(),
-                    'sortFormAction' => $category->getUrl(),
-                ];
-
-                return view(getTemplate() . '.pages.categories', $data);
-            }
+{
+    if (!empty($categorySlug)) {
+ 
+        // ✅ Category find
+        $categoryQuery = Category::query()->where('slug', $categorySlug);
+ 
+        if (!empty($subCategorySlug)) {
+            $categoryQuery = Category::query()->where('slug', $subCategorySlug);
         }
-
-        abort(404);
+ 
+        $category = $categoryQuery->with(['subCategories'])->first();
+ 
+        if (!empty($category)) {
+ 
+            // ✅ STEP 1: Parent + All Children IDs
+            $parentId = $category->parent_id ?? $category->id;
+ 
+            $categoryIds = Category::where('parent_id', $parentId)
+                ->pluck('id')
+                ->toArray();
+ 
+           
+            $categoryIds[] = $parentId;
+ 
+       
+            $webinarIds = \DB::table('category_mapping')
+                ->whereIn('category_id', $categoryIds)
+                ->pluck('webinar_id')
+                ->unique()
+                ->toArray();
+ 
+          
+            $webinarsQuery = Webinar::where('status', 'active')
+                ->where('private', false)
+                ->whereIn('id', $webinarIds);
+ 
+            $classesController = new ClassesController();
+ 
+           
+            $webinarsQuery = $classesController->handleFilters($request, $webinarsQuery);
+ 
+            // ✅ Sorting
+            $sort = $request->get('sort');
+            if (empty($sort)) {
+                $webinarsQuery = $webinarsQuery->orderBy('created_at', 'desc');
+            }
+ 
+           
+            $webinars = $webinarsQuery->with([
+                'tickets',
+                'categories'
+            ])->paginate(6);
+ 
+           
+            $featureWebinars = FeatureWebinar::whereIn('page', ['categories', 'home_categories'])
+                ->where('status', 'publish')
+                ->whereHas('webinar', function ($q) use ($webinarIds) {
+                    $q->whereIn('id', $webinarIds);
+                })
+                ->with(['webinar' => function ($query) {
+                    $query->with(['teacher:id,full_name,avatar', 'reviews', 'tickets', 'feature', 'categories']);
+                }])
+                ->orderBy('updated_at', 'desc')
+                ->get();
+ 
+            // ✅ SEO
+            $seoSettings = getSeoMetas('categories');
+ 
+            $data = [
+                'pageTitle' => $seoSettings['title'] ?? 'Category',
+                'pageDescription' => $seoSettings['description'] ?? '',
+                'pageRobot' => getPageRobot('categories'),
+                'category' => $category,
+                'webinars' => $webinars,
+                'featureWebinars' => $featureWebinars,
+                'webinarsCount' => $webinars->total(),
+                'sortFormAction' => $category->getUrl(),
+            ];
+// dd($data) ;
+            return view(getTemplate() . '.pages.categories', $data);
+        }
     }
+ 
+    abort(404);
+}
 }

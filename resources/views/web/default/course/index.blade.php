@@ -31,11 +31,12 @@
                         <h1 class="font-30 course-title">
                             {{ $course->title }}
                         </h1>
-
-                        @if(!empty($course->category))
-                            <span class="d-block font-16 mt-10">{{ trans('public.in') }} <a href="{{ $course->category->getUrl() }}" target="_blank" class="font-weight-500 text-decoration-underline text-white">{{ $course->category->title }}</a></span>
-                        @endif
-
+@if(!empty($subcategories))
+    <span class="d-block font-16 mt-10">
+        {{ trans('public.in') }} 
+        {{ $subcategories }}
+    </span>
+@endif
                         <div class="d-flex align-items-center">
                             @include('web.default.includes.webinar.rate',['rate' => $course->getRate()])
                             <span class="ml-10 mt-15 font-14">({{ $course->reviews->pluck('creator_id')->count() }} {{ trans('public.ratings') }})</span>

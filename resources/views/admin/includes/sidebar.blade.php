@@ -295,7 +295,7 @@
                 </li>
             @endcan()
 
-            @can('admin_filters')
+            <!-- Anjali 24-3-26  @can('admin_filters')
                 <li class="nav-item dropdown {{ (request()->is(getAdminPanelUrl('/filters*', false))) ? 'active' : '' }}">
                     <a href="#" class="nav-link has-dropdown" data-toggle="dropdown">
                         <i class="fas fa-filter"></i>
@@ -314,7 +314,7 @@
                         @endcan()
                     </ul>
                 </li>
-            @endcan()
+            @endcan() -->
 
             @can('admin_reviews_lists')
                 <li class="{{ (request()->is(getAdminPanelUrl('/reviews', false))) ? 'active' : '' }}">
