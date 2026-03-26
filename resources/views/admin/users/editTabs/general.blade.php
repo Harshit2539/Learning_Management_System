@@ -17,6 +17,21 @@
                     @enderror
                 </div>
 
+                @if($user->role_id == 1)
+                @php
+                    $universitys = \App\User::where('role_id', 3)->pluck('full_name');
+                @endphp
+        
+                <div class="form-group" id="universityField">
+                    <label class="input-label" for="university"> University:</label>
+ <input type="text"
+       id="university"
+       name="university"
+       class="form-control"
+       value="{{ old('university', $user->university ?? '') }}">
+                </div>
+              @endif
+
                 @can('admin_update_user_role_in_edit_page')
                     <div class="form-group">
                         <label>{{ trans('/admin/main.role_name') }}</label>

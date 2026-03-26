@@ -70,13 +70,16 @@ class RegisterController extends Controller
         $accountType = !empty($request->old('account_type')) ? $request->old('account_type') : "user";
         $formFields = $this->getFormFieldsByUserType($request, $accountType, true);
 
+        $universitys = User::where('role_id', 3)->pluck('full_name');
+        
         $data = [
             'pageTitle' => $pageTitle,
             'pageDescription' => $pageDescription,
             'pageRobot' => $pageRobot,
             'referralCode' => $referralCode,
             'referralSettings' => $referralSettings,
-            'formFields' => $formFields
+            'formFields' => $formFields,
+            'universitys' => $universitys
         ];
 
         return view(getTemplate() . '.auth.register', $data);
@@ -168,6 +171,7 @@ class RegisterController extends Controller
             'password' => Hash::make($data['password']),
             'affiliate' => $usersAffiliateStatus,
             'timezone' => $data['timezone'] ?? null,
+            'university' => $data['university'] ?? null,
             'created_at' => time()
         ]);
 

@@ -196,6 +196,7 @@
                     <tr>
                         <th>ID</th>
                         <th>{{ trans('admin/main.name') }}</th>
+                        <th>University</th>
                         <th>{{ trans('admin/main.classes') }}</th>
                         <th>{{ trans('admin/main.appointments') }}</th>
                         <th>{{ trans('admin/main.wallet_charge') }}</th>
@@ -228,7 +229,15 @@
                                     </div>
                                 </div>
                             </td>
+                            <td>
+                            @if($user->university)
 
+                                <div class="media-body">
+                                    <div class="mt-0 mb-1">{{ $user->university }}</div>
+                                </div>
+                                        @endif
+
+                            </td>
                             <td>
                                 <div class="media-body">
                                     <div class="text-primary mt-0 mb-1 font-weight-bold">{{ $user->classesPurchasedsCount }}</div>

@@ -932,6 +932,7 @@ class UserController extends Controller
         $user->about = !empty($data['about']) ? $data['about'] : null;
         $user->status = !empty($data['status']) ? $data['status'] : null;
         $user->language = !empty($data['language']) ? $data['language'] : null;
+        $user->university = !empty($data['university']) ? $data['university'] : null;
 
 
         if (!empty($data['password'])) {
