@@ -212,33 +212,33 @@
     <script src="/assets/default/js/parts/register.min.js"></script>
 
 
-    <script>
+  <script>
 document.addEventListener("DOMContentLoaded", function () {
- 
+
     const universityField = document.getElementById('universityField');
     const roleRadios = document.querySelectorAll('input[name="account_type"]');
-    const dropdown = document.getElementById('options');
- 
+    const universityInput = document.getElementById('university');
+
     function toggleUniversityField() {
-        let selectedRole = document.querySelector('input[name="account_type"]:checked')?.value;
- 
+        const selectedRole = document.querySelector('input[name="account_type"]:checked')?.value;
+
         if (selectedRole === 'user') {
             universityField.classList.remove('d-none');
-            dropdown.setAttribute('required', 'required'); // optional
+            universityInput.setAttribute('required', 'required');
         } else {
             universityField.classList.add('d-none');
-            dropdown.removeAttribute('required');
+            universityInput.removeAttribute('required');
         }
     }
- 
 
+    // Initialize on page load
     toggleUniversityField();
- 
-    // change event
+
+    // Listen for changes
     roleRadios.forEach(radio => {
         radio.addEventListener('change', toggleUniversityField);
     });
- 
+
 });
 </script>
 @endpush
