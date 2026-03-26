@@ -82,6 +82,12 @@
                             @enderror
                         </div>
 
+                        <div class="form-group d-none" id="universityField">
+                            <label class="input-label" for="university">University:</label>
+ 
+                           <input type="text"  id="university" name="university"  class="form-control"  placeholder="Enter University Name"  value="{{ old('university') }}">
+                        </div>
+
                         <div class="form-group">
                             <label class="input-label" for="password">{{ trans('auth.password') }}:</label>
                             <input name="password" type="password"
@@ -204,4 +210,35 @@
     <script src="/vendor/laravel-filemanager/js/stand-alone-button.js"></script>
     <script src="/assets/default/js/parts/forms.min.js"></script>
     <script src="/assets/default/js/parts/register.min.js"></script>
+
+
+    <script>
+document.addEventListener("DOMContentLoaded", function () {
+ 
+    const universityField = document.getElementById('universityField');
+    const roleRadios = document.querySelectorAll('input[name="account_type"]');
+    const dropdown = document.getElementById('options');
+ 
+    function toggleUniversityField() {
+        let selectedRole = document.querySelector('input[name="account_type"]:checked')?.value;
+ 
+        if (selectedRole === 'user') {
+            universityField.classList.remove('d-none');
+            dropdown.setAttribute('required', 'required'); // optional
+        } else {
+            universityField.classList.add('d-none');
+            dropdown.removeAttribute('required');
+        }
+    }
+ 
+
+    toggleUniversityField();
+ 
+    // change event
+    roleRadios.forEach(radio => {
+        radio.addEventListener('change', toggleUniversityField);
+    });
+ 
+});
+</script>
 @endpush

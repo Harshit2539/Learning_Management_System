@@ -202,6 +202,7 @@ class UserController extends Controller
                     'language' => $data['language'] ?? null,
                     'timezone' => $data['timezone'] ?? null,
                     'currency' => $data['currency'] ?? null,
+                    'university' => $data['university'] ?? null,
                     'newsletter' => $joinNewsletter,
                     'public_message' => (!empty($data['public_messages']) and $data['public_messages'] == 'on'),
                 ];

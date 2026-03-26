@@ -53,6 +53,22 @@
                 @enderror
             </div>
 
+           @if($user->role_id == 1)
+            @php
+                $universitys = \App\User::where('role_id', 3)->pluck('full_name');
+            @endphp
+ 
+            <div class="form-group" id="universityField">
+                <label class="input-label" for="university"> University:</label>
+ 
+               <input type="text"
+       id="university"
+       name="university"
+       class="form-control"
+       value="{{ str_replace(',', '', old('university', $user->university ?? '')) }}">
+            </div>
+            @endif
+
 
             @if(!empty($userLanguages))
                 <div class="form-group">

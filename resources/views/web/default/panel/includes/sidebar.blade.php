@@ -10,6 +10,7 @@
 
         <div class="user-name ml-15">
             <h3 class="font-16 font-weight-bold">{{ $authUser->full_name }}</h3>
+          
         </div>
     </div>
 
@@ -32,7 +33,10 @@
         <div class="d-flex flex-column align-items-center justify-content-center">
             <a href="/panel" class="user-name mt-15">
                 <h3 class="font-16 font-weight-bold text-center">{{ $authUser->full_name }}</h3>
-            </a>
+<p class="mb-0" style="font-size:13px;font-weight:500;">
+    {{ $authUser->university }}
+</p>            
+</a>
 
             @if(!empty($authUser->getUserGroup()))
                 <span class="create-new-user mt-10">{{ $authUser->getUserGroup()->name }}</span>
