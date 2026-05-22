@@ -375,6 +375,7 @@ class WebinarController extends Controller
 
     public function edit(Request $request, $id, $step = 1)
     {
+
         $this->authorize("panel_webinars_create");
 
         $user = auth()->user();
@@ -503,6 +504,12 @@ class WebinarController extends Controller
         }
 
         $data['webinar'] = $webinar;
+           ///Ayush////
+           $assignment = DB::table('assignments')
+        ->where('course_id', $webinar->id)
+        ->first();
+ 
+        $data['assignment'] = $assignment;
 
         $data['pageTitle'] = trans('public.edit') . ' ' . $webinar->title;
 
@@ -605,7 +612,7 @@ class WebinarController extends Controller
         if (!$directPublicationOfCourses and (($currentStep == 8 and !$getNextStep and !$isDraft) or (!$getNextStep and !$isDraft))) {
             $webinarRulesRequired = empty($data['rules']);
         }
-
+      
         $this->validate($request, $rules);
 
         $status = ($isDraft or $webinarRulesRequired) ? Webinar::$isDraft : Webinar::$pending;
@@ -708,6 +715,64 @@ class WebinarController extends Controller
             // 🔥 IMPORTANT FIX
             $data['category_id'] = null;
             //////End/////////////
+              // Get existing assignment
+          $assignment = DB::table('assignments')
+            ->where('course_id', $webinar->id)
+            ->first();
+ 
+       
+        $filePath = $assignment->file ?? null;
+ 
+      
+        if ($request->hasFile('assignment_file')) {
+ 
+            $file = $request->file('assignment_file');
+ 
+          
+            $filename = time() . '_' . $file->getClientOriginalName();
+ 
+          
+            if (!empty($assignment) && !empty($assignment->file)) {
+               
+                $oldPath = str_replace('store/', '', $assignment->file);
+                Storage::disk('public')->delete($oldPath);
+            }
+ 
+          
+            $file->storeAs('assignments', $filename, 'public');
+ 
+          
+            $filePath = 'store/assignments/' . $filename;
+        }
+ 
+        // ================= SAVE DATA =================
+        if ($assignment) {
+ 
+            DB::table('assignments')
+                ->where('course_id', $webinar->id)
+                ->update([
+                    'instructor_id' => auth()->id(),
+                    'title' => $request->assignment_title,
+                    'file' => $filePath,
+                    'total_marks' => $request->assignment_marks,
+                    'deadline' => $request->assignment_deadline,
+                    'updated_at' => now(),
+                ]);
+ 
+        } else {
+ 
+            DB::table('assignments')
+                ->insert([
+                    'course_id' => $webinar->id,
+                    'instructor_id' => auth()->id(),
+                    'title' => $request->assignment_title,
+                    'file' => $filePath,
+                    'total_marks' => $request->assignment_marks,
+                    'deadline' => $request->assignment_deadline,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+        }
         }
 
         

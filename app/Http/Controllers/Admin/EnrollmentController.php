@@ -17,6 +17,7 @@ use App\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\DB;
 
 class EnrollmentController extends Controller
 {
@@ -183,6 +184,53 @@ class EnrollmentController extends Controller
 
             if (!empty($data['webinar_id'])) {
                 $course = Webinar::find($data['webinar_id']);
+    if (!empty($data['webinar_id']) && !empty($data['user_id'])) {
+
+    // Step 1: course_id ka first record uthao
+    $assignment = DB::table('assignments')
+        ->where('course_id', $data['webinar_id'])
+        ->orderBy('id', 'asc') // first record
+        ->first();
+
+    if ($assignment) {
+
+        // Case 1: user_id NULL hai → update karo
+        if (empty($assignment->user_id)) {
+
+            DB::table('assignments')
+                ->where('id', $assignment->id)
+                ->update([
+                    'user_id' => $data['user_id'],
+                    'updated_at' => now(),
+                ]);
+
+        } else {
+
+            // Case 2: check duplicate (same course + same user)
+            $exists = DB::table('assignments')
+                ->where('course_id', $data['webinar_id'])
+                ->where('user_id', $data['user_id'])
+                ->exists();
+
+            if (!$exists) {
+
+                // CLONE first record with clean submission state
+                $newData = (array) $assignment;
+
+                unset($newData['id']); // remove primary key
+
+                $newData['user_id']     = $data['user_id']; // new user
+                $newData['pdf_review']  = null;             // no submission yet
+                $newData['admin_marks'] = null;             // no marks yet
+                $newData['created_at']  = now();
+                $newData['updated_at']  = now();
+
+                DB::table('assignments')->insert($newData);
+            }
+        }
+
+    }
+}
 
                 if (!empty($course)) {
                     $sellerId = $course->creator_id;

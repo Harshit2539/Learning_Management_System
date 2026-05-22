@@ -45,8 +45,14 @@
     </div>
 
     <div class="d-flex sidebar-user-stats pb-10 ml-20 pb-lg-20 mt-15 mt-lg-30">
-        <div class="sidebar-user-stat-item d-flex flex-column">
-            <strong class="text-center">{{ $authUser->webinars()->count() }}</strong>
+       <div class="sidebar-user-stat-item d-flex flex-column">
+            <strong class="text-center">
+                @if($authUser->isUser())
+                    {{ \App\Models\Sale::where('buyer_id', $authUser->id)->whereNotNull('webinar_id')->whereNull('refund_at')->where('access_to_purchased_item', true)->whereHas('webinar', function($q){ $q->where('status','active'); })->count() }}
+                @else
+                    {{ $authUser->webinars()->count() }}
+                @endif
+            </strong>
             <span class="font-12">{{ trans('panel.classes') }}</span>
         </div>
 
@@ -132,6 +138,37 @@
                 </li>
             @endcan
         @endif
+        @if($authUser->role_name == 'teacher')
+@can('panel_assignments')
+ 
+    <li class="sidenav-item {{ (request()->is('panel/assignments') or request()->is('panel/assignments/*')) ? 'sidenav-item-active' : '' }}">
+        
+        <a class="d-flex align-items-center" data-toggle="collapse" href="#assignmentCollapse">
+ 
+            <span class="sidenav-item-icon mr-10">
+                @include('web.default.panel.includes.sidebar_icons.assignments')
+            </span>
+ 
+            <span class="font-14 text-dark-blue font-weight-500">Assignments</span>
+        </a>
+ 
+        <div class="collapse {{ (request()->is('panel/assignments') or request()->is('panel/assignments/*')) ? 'show' : '' }}" id="assignmentCollapse">
+            
+            <ul class="sidenav-item-collapse">
+ 
+              
+                <li class="mt-5 {{ (request()->is('panel/assignments/student')) ? 'active' : '' }}">
+                    <a href="/panel/assignments/student">Student Assignments</a>
+                </li>
+ 
+            </ul>
+ 
+        </div>
+ 
+    </li>
+ 
+    @endcan
+            @endif
 
         @can('panel_webinars')
             <li class="sidenav-item {{ (request()->is('panel/webinars') or request()->is('panel/webinars/*')) ? 'sidenav-item-active' : '' }}">

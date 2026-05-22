@@ -7,6 +7,10 @@ use App\Exports\InstructorsExport;
 use App\Exports\OrganizationsExport;
 use App\Exports\StudentsExport;
 use App\Exports\UsersExport;
+use App\Imports\StudentsImport;
+use App\Mail\CourseAssigned;
+use App\Mail\WelcomeUser;
+use Illuminate\Support\Facades\Mail;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Web\traits\UserFormFieldsTrait;
 use App\Models\Badge;
@@ -165,6 +169,7 @@ class UserController extends Controller
             'totalOrganizationsStudents' => $totalOrganizationsStudents,
             'userGroups' => $userGroups,
             'organizations' => $organizations,
+            'webinars' => Webinar::select('id', 'slug')->where('status', 'active')->orderBy('slug')->get(),
         ];
 
         return view('admin.users.students', $data);
@@ -506,6 +511,19 @@ class UserController extends Controller
                     'verified' => true,
                     'created_at' => time(),
                 ]);
+
+                // Send welcome email with credentials
+                if (!empty($user->email)) {
+                    try {
+                        Mail::to($user->email)->send(new WelcomeUser(
+                            $user->full_name,
+                            $user->email,
+                            $data['password']
+                        ));
+                    } catch (\Exception $e) {
+                        // mail failure should not block user creation
+                    }
+                }
 
                 if (!empty($data['group_id'])) {
                     $group = Group::find($data['group_id']);
@@ -1319,6 +1337,135 @@ class UserController extends Controller
         $usersExport = new StudentsExport($users);
 
         return Excel::download($usersExport, 'students.xlsx');
+    }
+
+    public function bulkAssignCourse(Request $request)
+    {
+        $this->authorize('admin_users_edit');
+
+        $this->validate($request, [
+            'webinar_id'    => 'required|exists:webinars,id',
+            'student_ids'   => 'required|array|min:1',
+            'student_ids.*' => 'exists:users,id',
+        ]);
+
+        $webinar = Webinar::findOrFail($request->webinar_id);
+        $assigned = 0;
+        $skipped  = 0;
+
+        // Fetch the assignment template for this course once (to clone per student)
+        $assignmentTemplate = DB::table('assignments')
+            ->where('course_id', $webinar->id)
+            ->orderBy('id', 'asc')
+            ->first();
+
+        foreach ($request->student_ids as $studentId) {
+            $user = User::find($studentId);
+            if (empty($user)) { $skipped++; continue; }
+
+            $alreadyBought = Sale::where('buyer_id', $studentId)
+                ->where('webinar_id', $webinar->id)
+                ->whereNull('refund_at')
+                ->where('access_to_purchased_item', true)
+                ->exists();
+
+            if ($alreadyBought || $webinar->isOwner($studentId)) { $skipped++; continue; }
+
+            Sale::create([
+                'buyer_id'                 => $studentId,
+                'seller_id'                => $webinar->creator_id,
+                'webinar_id'               => $webinar->id,
+                'type'                     => Sale::$webinar,
+                'manual_added'             => true,
+                'payment_method'           => Sale::$credit,
+                'amount'                   => 0,
+                'total_amount'             => 0,
+                'access_to_purchased_item' => true,
+                'created_at'               => time(),
+            ]);
+
+            // Assign the template row to this student.
+            // If the template row has NULL user_id, update it in-place (no extra row).
+            // Otherwise clone it — but only if this student doesn't already have a row.
+            if (!empty($assignmentTemplate)) {
+                $alreadyHasAssignment = DB::table('assignments')
+                    ->where('course_id', $webinar->id)
+                    ->where('user_id', $studentId)
+                    ->exists();
+
+                if (!$alreadyHasAssignment) {
+                    if (empty($assignmentTemplate->user_id)) {
+                        // Template row has no user yet — claim it for this student
+                        DB::table('assignments')
+                            ->where('id', $assignmentTemplate->id)
+                            ->update([
+                                'user_id'    => $studentId,
+                                'updated_at' => now(),
+                            ]);
+                        // Refresh template so next student gets a fresh clone
+                        $assignmentTemplate = DB::table('assignments')
+                            ->where('id', $assignmentTemplate->id)
+                            ->first();
+                    } else {
+                        // Template already owned — insert a clean clone for this student
+                        $newRow = (array) $assignmentTemplate;
+                        unset($newRow['id']);
+                        $newRow['user_id']    = $studentId;
+                        $newRow['pdf_review'] = null;
+                        $newRow['admin_marks'] = null;
+                        $newRow['created_at'] = now();
+                        $newRow['updated_at'] = now();
+                        DB::table('assignments')->insert($newRow);
+                    }
+                }
+            }
+
+            $assigned++;
+
+            if (!empty($user->email)) {
+                try {
+                    Mail::to($user->email)->send(new CourseAssigned(
+                        $user->full_name,
+                        $webinar->title,
+                        $webinar->slug
+                    ));
+                } catch (\Exception $e) {
+                    // mail failure should not block the assignment
+                }
+            }
+        }
+
+        $toastData = [
+            'title'  => trans('public.request_success'),
+            'msg'    => $assigned . ' student(s) assigned to course.' . ($skipped ? ' ' . $skipped . ' skipped (already enrolled or owner).' : ''),
+            'status' => 'success',
+        ];
+
+        return redirect()->back()->with(['toast' => $toastData]);
+    }
+
+    public function importStudents(Request $request)
+    {
+        $this->authorize('admin_users_create');
+
+        $this->validate($request, [
+            'file' => 'required|file|mimes:xlsx,xls,csv|max:5120',
+        ]);
+
+        $import = new StudentsImport();
+        Excel::import($import, $request->file('file'));
+
+        $toastData = [
+            'title' => trans('public.request_success'),
+            'msg'   => $import->importedCount . ' students imported successfully.' .
+                       (!empty($import->errors) ? ' ' . count($import->errors) . ' rows had errors.' : ''),
+            'status' => empty($import->errors) ? 'success' : 'warning',
+        ];
+
+        return redirect()->back()->with([
+            'toast' => $toastData,
+            'import_errors' => $import->errors,
+        ]);
     }
 
     public function userRegistrationPackage(Request $request, $id)

@@ -1,10 +1,14 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-
+use App\Http\Controllers\Admin\WebinarController;
 $prefix = getAdminPanelUrlPrefix();
 
+   
+ 
+
 Route::group(['prefix' => $prefix, 'namespace' => 'Admin', 'middleware' => ['web', 'admin_locale']], function () use ($prefix) {
+  
 
     // Admin Auth Routes
     Route::get('login', 'LoginController@showLoginForm');
@@ -15,6 +19,8 @@ Route::group(['prefix' => $prefix, 'namespace' => 'Admin', 'middleware' => ['web
     Route::post('/forget-password', 'ForgotPasswordController@forgot');
     Route::get('/reset-password/{token}', 'ResetPasswordController@showResetForm');
     Route::post('/reset-password', 'ResetPasswordController@updatePassword');
+
+     
 
     // Captcha
     Route::group(['prefix' => 'captcha'], function () use ($prefix) {
@@ -60,6 +66,8 @@ Route::group(['prefix' => $prefix, 'namespace' => 'Admin', 'middleware' => ['web
         Route::group(['prefix' => 'students'], function () {
             Route::get('/', 'UserController@students');
             Route::get('/excel', 'UserController@exportExcelStudents');
+            Route::post('/import', 'UserController@importStudents');
+            Route::post('/bulk-assign-course', 'UserController@bulkAssignCourse');
         });
 
         Route::group(['prefix' => 'instructors'], function () {
@@ -71,7 +79,13 @@ Route::group(['prefix' => $prefix, 'namespace' => 'Admin', 'middleware' => ['web
             Route::get('/', 'UserController@organizations');
             Route::get('/excel', 'UserController@exportExcelOrganizations');
         });
-
+Route::group(['prefix' => 'customeassigmentpreview', 'namespace' => 'Admin', 'middleware' => ['web', 'admin']], function () {
+    Route::get('/', [App\Http\Controllers\Admin\WebinarController::class, 'customAssignmentPreview'])
+        ->name('admin.customeassigmentpreview');
+        Route::post('/admin/assignments/submit-marks', [App\Http\Controllers\Admin\WebinarController::class, 'submitMarks'])
+    ->name('admin.assignments.submitMarks')
+    ->middleware('admin');
+});
         Route::group(['prefix' => 'users'], function () {
             Route::get('/create', 'UserController@create');
             Route::post('/store', 'UserController@store');
@@ -326,7 +340,7 @@ Route::group(['prefix' => $prefix, 'namespace' => 'Admin', 'middleware' => ['web
                 Route::get('/{id}/delete', 'CoursePersonalNotesController@delete');
             });
         });
-
+    
         Route::group(['prefix' => 'quizzes'], function () {
             Route::get('/', 'QuizController@index');
             Route::get('/create', 'QuizController@create');

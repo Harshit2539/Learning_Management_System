@@ -35,6 +35,7 @@ use App\Models\WebinarPartnerTeacher;
 use App\User;
 use App\Models\Webinar;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
@@ -42,7 +43,59 @@ use Maatwebsite\Excel\Facades\Excel;
 class WebinarController extends Controller
 {
     use WebinarChangeCreator, ProductBadgeTrait, VideoDemoTrait;
+public function customAssignmentPreview()
+{
+    $assignments = DB::table('assignments')
+        ->join('users', 'assignments.user_id', '=', 'users.id')
+        ->select(
+            'assignments.*',
+            'users.full_name as user_name'
+        )
+        ->get();
+//   dd($assignments);
+    return view('admin.customeassigmentpreview.index', compact('assignments'));
+}
+public function submitMarks(Request $request)
+{
+    try {
+        $request->validate([
+            'assignment_id' => 'required|exists:assignments,id',
+            'obtain_marks'  => 'required|numeric|min:0'
+        ]);
 
+        $assignment = DB::table('assignments')
+            ->where('id', $request->assignment_id)
+            ->first();
+
+        if (!$assignment) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Assignment not found'
+            ]);
+        }
+
+        // Prevent marks > total
+        $marks = min($request->obtain_marks, $assignment->total_marks);
+
+        DB::table('assignments')
+            ->where('id', $assignment->id)
+            ->update([
+                'admin_marks' => $marks
+            ]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Marks saved successfully!'
+        ]);
+
+    } catch (\Exception $e) {
+
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Server error: ' . $e->getMessage()
+        ]);
+    }
+}
 
     public function index(Request $request)
     {
@@ -504,6 +557,12 @@ public function store(Request $request)
         'start_date' => 'required_if:type,webinar',
         'capacity' => 'nullable|numeric|min:0',
         'price' => 'nullable|numeric|min:0',
+
+         // Assignment validation
+        'assignment_title' => '|string|max:255',
+        'assignment_total_marks' => '|integer|min:0',
+        'assignment_deadline' => '|date',
+        'assignment_pdf' => '|file|mimes:pdf|', // only PDF, max 10MB
     ]);
 
     $data = $request->all();
@@ -626,6 +685,40 @@ public function store(Request $request)
             ]);
         }
     }
+    ///assignmet submit ///
+    $assignmentFile = null;
+
+if ($request->hasFile('assignment_pdf')) {
+    $file = $request->file('assignment_pdf');
+    $filename = time().'_'.$file->getClientOriginalName();
+
+    // Store in public/store/assignments
+    $file->move(public_path('store/assignments'), $filename);
+
+    $assignmentFile = 'store/assignments/'.$filename; // ✅ store this in DB
+}
+if (!empty($data['assignment_title'])) {
+
+    DB::table('assignments')->insert([
+
+        'course_id' => $webinar->id,
+
+        'instructor_id' => $data['teacher_id'],
+
+        'title' => $data['assignment_title'],
+
+        'file' => $assignmentFile,
+
+        'total_marks' => $data['assignment_total_marks'] ?? null,
+
+        'deadline' => $data['assignment_deadline'] ?? null,
+
+        'created_at' => now(),
+
+        'updated_at' => now(),
+
+    ]);
+}
 
     return redirect(getAdminPanelUrl() . '/webinars/' . $webinar->id . '/edit?locale=' . $data['locale']);
 }
@@ -661,6 +754,11 @@ public function edit(Request $request, $id)
     $categories = Category::where('parent_id', null)
         ->with('subCategories')
         ->get();
+      
+     $assignment = DB::table('assignments')
+    ->where('course_id', $webinar->id)
+    ->first();
+    // dd($assignment);
 
     // Get the selected categories/subcategories for this webinar
     $selectedCategoryIds = \DB::table('category_mapping')
@@ -687,6 +785,8 @@ public function edit(Request $request, $id)
         'webinarPartnerTeacher' => $webinar->webinarPartnerTeacher,
         'webinarTags' => $webinar->tags->pluck('title')->toArray(),
         'defaultLocale' => getDefaultLocale(),
+       'assignment' => $assignment,
+
     ];
 
     return view('admin.webinars.create', $data);
@@ -1232,6 +1332,46 @@ if (!empty($data['category_id']) && is_array($data['category_id'])) {
         }
     }
 }
+////Assigment Submit ////
+
+$assignmentFile = null;
+    if ($request->hasFile('assignment_pdf')) {
+        $file = $request->file('assignment_pdf');
+        $filename = time().'_'.$file->getClientOriginalName();
+        $file->move(public_path('store/assignments'), $filename);
+        $assignmentFile = 'store/assignments/'.$filename;
+    }
+
+    // Check if assignment exists for this webinar
+    $assignment = DB::table('assignments')
+        ->where('course_id', $webinar->id)
+        ->first();
+
+    if ($assignment) {
+        // Update existing assignment
+        DB::table('assignments')
+            ->where('id', $assignment->id)
+            ->update([
+                'title' => $data['assignment_title'],
+                'total_marks' => $data['assignment_total_marks'] ?? null,
+                'deadline' => $data['assignment_deadline'] ?? null,
+                'file' => $assignmentFile ?? $assignment->file, // keep old if no new upload
+                'updated_at' => now(),
+            ]);
+    } else {
+        // Insert new assignment
+        DB::table('assignments')->insert([
+            'course_id' => $webinar->id,
+            'instructor_id' => $data['teacher_id'],
+            'title' => $data['assignment_title'],
+            'file' => $assignmentFile,
+            'total_marks' => $data['assignment_total_marks'] ?? null,
+            'deadline' => $data['assignment_deadline'] ?? null,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+    /////////////End ///////
 
     // Send notifications for publish/reject
     if ($publish) {
@@ -1260,11 +1400,32 @@ if (!empty($data['category_id']) && is_array($data['category_id'])) {
 
     public function destroy(Request $request, $id)
     {
+        // dd($id);
         $this->authorize('admin_webinars_delete');
 
         $webinar = Webinar::query()->findOrFail($id);
 
         $webinar->delete();
+        //Anjali 6 april// 
+         // Find the assignment linked to this course (if any)
+    $assignmentPreview = DB::table('assignments')
+                    ->where('course_id', $webinar->id)
+                    ->first();
+
+    if ($assignmentPreview) {
+        // Delete assignment file if exists
+        if (!empty($assignment->file) && file_exists(public_path($assignment->file))) {
+            unlink(public_path($assignment->file));
+        }
+
+        // Delete PDF review file if exists
+        if (!empty($assignment->pdf_review) && file_exists(public_path($assignment->pdf_review))) {
+            unlink(public_path($assignment->pdf_review));
+        }
+
+        // Delete the assignment record
+        DB::table('assignments')->where('id', $assignmentPreview->id)->delete();
+    }
 
         return redirect(getAdminPanelUrl() . '/webinars');
     }

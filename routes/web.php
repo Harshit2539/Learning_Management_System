@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Panel\AssignmentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -107,6 +108,9 @@ Route::group(['namespace' => 'Web', 'middleware' => ['check_mobile_app', 'impers
         Route::get('/{slug}/points/apply', 'WebinarController@buyWithPoint');
         Route::post('/{id}/report', 'WebinarController@reportWebinar');
         Route::post('/{id}/learningStatus', 'WebinarController@learningStatus');
+        ///Anjali 5 April////
+    Route::post('/submit-custom-assignment-preview', 'WebinarController@submitCustomAssignmentPreview')
+    ->name('submitcustomassignmentpreview');
 
         Route::group(['middleware' => 'web.auth'], function () {
             Route::get('/{slug}/installments', 'WebinarController@getInstallmentsByCourse');
@@ -157,7 +161,15 @@ Route::group(['namespace' => 'Web', 'middleware' => ['check_mobile_app', 'impers
     });
 
     Route::group(['middleware' => 'web.auth'], function () {
-
+//ayush 6 April
+ 
+      Route::get('/panel/assignments/student', [AssignmentController::class, 'studentAssignments'])
+      ->name('panel.assignments.student');
+ Route::post('/panel/assignments/marks/{id}', [AssignmentController::class, 'updateMarks'])
+       ->name('panel.assignments.marksupdate');
+    Route::post('/panel/assignments/submit-marks', [AssignmentController::class, 'submitMarks'])
+    ->name('panel.assignments.submitMarks');
+         //end Ayush Mishra 6 april
         Route::group(['prefix' => 'laravel-filemanager'], function () {
             \UniSharp\LaravelFilemanager\Lfm::routes();
         });

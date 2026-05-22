@@ -1,4 +1,5 @@
 <?php
+namespace App\Http\Controllers\Admin;
 
 namespace App\Http\Controllers\Web;
 
@@ -29,6 +30,55 @@ class WebinarController extends Controller
 {
     use CheckContentLimitationTrait;
     use InstallmentsTrait;
+////Anjali 5 April////
+
+
+public function submitCustomAssignmentPreview(Request $request)
+{
+    // dd($request->all());
+    // Validate request
+    $request->validate([
+        'assignment_pdf' => 'required|mimes:pdf|max:10240',
+        'assignment_id' => 'required|integer',
+    ]);
+
+    $assignmentId = $request->assignment_id;
+
+    if ($request->hasFile('assignment_pdf')) {
+
+        $file = $request->file('assignment_pdf');
+
+        // Unique file name
+        $filename = time() . '_' . $file->getClientOriginalName();
+
+        // Ensure folder exists
+        $destinationPath = public_path('store/assignments');
+
+        if (!file_exists($destinationPath)) {
+            mkdir($destinationPath, 0775, true);
+        }
+
+        // Move file
+        $file->move($destinationPath, $filename);
+
+        // Path for DB
+        $dbPath = 'store/assignments/' . $filename;
+
+        // Update assignment
+        DB::table('assignments')
+            ->where('id', $assignmentId)
+            ->update([
+                'pdf_review' => $dbPath,
+                'user_id'    => auth()->id(),
+                'updated_at' => now(),
+                
+            ]);
+
+        return redirect()->back()->with('success', 'PDF uploaded successfully!');
+    }
+
+    return redirect()->back()->with('error', 'No file selected.');
+}
 
     // public function course($slug, $justReturnData = false)
     // {
@@ -576,6 +626,13 @@ class WebinarController extends Controller
             ->where('expired_at', '>', time())
             ->get();
     }
+    ////Anjali /////
+//    dd($user->id);
+
+$custompdfpreviewattched = DB::table('assignments')
+    ->where('course_id', $course->id)
+    ->where('user_id', $user->id) // ✅ add this line
+    ->first();
 
     $data = [
         'pageTitle' => $course->title,
@@ -598,6 +655,7 @@ class WebinarController extends Controller
         'cashbackRules' => $cashbackRules ?? null,
         'instructorDiscounts' => $instructorDiscounts,
         'subcategories' => $subcategoryList, // <--- added here
+        'custompdfpreviewattched' => $custompdfpreviewattched, // <--- added here   
     ];
 
     // check for certificate

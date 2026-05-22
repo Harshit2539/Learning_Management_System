@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Panel;
-
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Models\File;
 use App\Models\Sale;
@@ -522,4 +522,120 @@ class AssignmentController extends Controller
             'code' => 200
         ], 200);
     }
+    ///Ayush ///
+   public function studentAssignments()
+    {
+        $user = auth()->user();
+ 
+        $assignments = DB::table('assignments')
+            ->leftJoin('users', 'assignments.user_id', '=', 'users.id')
+            ->where('assignments.instructor_id', $user->id)
+            ->whereNotNull('assignments.user_id')  // ← Filter out NULL user_id template rows
+            ->select(
+                'assignments.*',
+                'users.full_name as student_name'
+            )
+            ->get();
+ 
+        return view('web.default.panel.assignments.studentAssignment', compact('assignments'));
+    }
+
+
+      public function updateMarks(Request $request, $id)
+    {
+        // dd(123);
+        $request->validate([
+            'admin_marks' => 'required|numeric|min:0'
+        ]);
+ 
+        $assignment = DB::table('assignments')->where('id', $id)->first();
+ 
+        if (!$assignment) {
+            return back()->with('error', 'Assignment not found');
+        }
+ 
+        if ($request->obtained_marks > $assignment->total_marks) {
+            return back()->with('error', 'Marks cannot be greater than total marks');
+        }
+ 
+        DB::table('assignments')
+            ->where('id', $id)
+            ->update([
+                'admin_marks' => $request->admin_marks
+            ]);
+ 
+        return back()->with('success', 'Marks updated successfully');
+    }
+
+public function submitMarks(Request $request)
+{ 
+    try {
+        $request->validate([
+            'assignment_id' => 'required|exists:assignments,id',
+            'obtain_marks'  => 'required|numeric|min:0'
+        ]);
+
+        $assignment = DB::table('assignments')
+            ->where('id', $request->assignment_id)
+            ->first();
+
+        if (!$assignment) {
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'status' => 'error',
+                    'message' => 'Assignment not found'
+                ], 404);
+            }
+            return redirect()->back()->with('error', 'Assignment not found');
+        }
+
+        // Ensure marks don't exceed total marks
+        $marks = min($request->obtain_marks, $assignment->total_marks);
+
+        DB::table('assignments')
+            ->where('id', $assignment->id)
+            ->update([
+                'admin_marks' => $marks,
+                'updated_at' => now()
+            ]);
+
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'status' => 'success',
+                'message' => 'Marks saved successfully!',
+                'data' => [
+                    'assignment_id' => $assignment->id,
+                    'marks' => $marks,
+                    'total_marks' => $assignment->total_marks
+                ]
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Marks saved successfully!');
+
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => false,
+                'status' => 'error',
+                'message' => 'Validation failed: ' . $e->getMessage()
+            ], 422);
+        }
+        return redirect()->back()->with('error', 'Validation failed: ' . $e->getMessage());
+        
+    } catch (\Exception $e) {
+        \Log::error('Marks submission error: ' . $e->getMessage());
+        
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => false,
+                'status' => 'error',
+                'message' => 'Server error: ' . $e->getMessage()
+            ], 500);
+        }
+        return redirect()->back()->with('error', 'Error: ' . $e->getMessage());
+    }
+}
 }

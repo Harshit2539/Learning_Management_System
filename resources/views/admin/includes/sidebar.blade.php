@@ -324,7 +324,14 @@
                     </a>
                 </li>
             @endcan
-
+@can('admin_reviews_lists')
+<li class="{{ request()->is(getAdminPanelUrl('/customeassigmentpreview', false)) ? 'active' : '' }}">
+    <a href="{{ route('admin.customeassigmentpreview') }}" class="nav-link">
+        <i class="fas fa-file-pdf"></i>
+        <span>Assignment Preview</span>
+    </a>
+</li>
+@endcan
 
 
 

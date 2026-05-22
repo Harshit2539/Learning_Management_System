@@ -564,6 +564,78 @@
     @enderror
 </div>
 
+<!--- Anjali 5 April--->
+
+<div class="form-group mt-15">
+    <label class="input-label">Assignment Title</label>
+    <input type="text"
+           name="assignment_title"
+          value="{{ old('assignment_title', $assignment->title ?? '') }}"
+           class="form-control @error('assignment_title') is-invalid @enderror"
+           placeholder="Enter assignment title"
+           required>
+    @error('assignment_title')
+    <div class="invalid-feedback">
+        {{ $message }}
+    </div>
+    @enderror
+</div>
+
+<div class="form-group mt-15">
+    <label class="input-label">Total Marks</label>
+    <input type="number"
+           name="assignment_total_marks"
+          value="{{ old('assignment_total_marks', $assignment->total_marks ?? '') }}"
+           class="form-control @error('assignment_total_marks') is-invalid @enderror"
+           placeholder="Enter total marks"
+           required>
+    @error('assignment_total_marks')
+    <div class="invalid-feedback">
+        {{ $message }}
+    </div>
+    @enderror
+</div>
+
+<div class="form-group mt-15">
+    <label class="input-label">Deadline</label>
+    <input type="date"
+           name="assignment_deadline"
+          value="{{ old('assignment_deadline', !empty($assignment->deadline) ? date('Y-m-d', strtotime($assignment->deadline)) : '') }}"
+           class="form-control @error('assignment_deadline') is-invalid @enderror"
+           required>
+    @error('assignment_deadline')
+    <div class="invalid-feedback">
+        {{ $message }}
+    </div>
+    @enderror
+</div>
+
+<div class="form-group mt-15">
+    <label class="input-label">Upload PDF Assignment</label>
+
+    @if(!empty($assignment->file))
+        <div class="mt-2 mb-2">
+            <a href="{{ asset($assignment->file) }}" target="_blank" 
+               class="btn btn-success btn-sm d-flex align-items-center justify-content-center w-50">
+                <i class="fas fa-file-pdf me-2"></i> Preview PDF
+            </a>
+        </div>
+    @endif
+
+    <input type="file"
+           name="assignment_pdf"
+           accept="application/pdf"
+           class="form-control @error('assignment_pdf') is-invalid @enderror"
+           required>
+
+    @error('assignment_pdf')
+        <div class="invalid-feedback">
+            {{ $message }}
+        </div>
+    @enderror
+</div>
+<!--- Anjali 5 April--->
+
                                         </div>
                                     </div>
 

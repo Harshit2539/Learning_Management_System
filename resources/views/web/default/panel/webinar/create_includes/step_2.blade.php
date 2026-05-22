@@ -229,7 +229,60 @@
             @enderror
         </div>
 
-        
+        <hr class="mt-30 mb-20">
+ 
+        <h4>📘 Assignment</h4>
+ 
+        <!-- Title -->
+        <div class="form-group mt-15">
+            <label class="input-label">Assignment Title</label>
+            <input type="text"
+                name="assignment_title"
+                value="{{ old('assignment_title', $assignment->title ?? '') }}"
+                class="form-control"
+                placeholder="Enter Assignment Title">
+        </div>
+ 
+        <!-- File Upload -->
+        <div class="form-group mt-15">
+            <label class="input-label">Upload Assignment File</label>
+            <input type="file" name="assignment_file" class="form-control">
+ 
+            @if(!empty($assignment) && !empty($assignment->file))
+                <div class="mt-10 p-10 border rounded bg-light">
+ 
+                    <p class="mb-5">
+                        <strong>Current File:</strong>
+                        {{ basename($assignment->file) }}
+                    </p>
+ 
+                    <a href="{{ url($assignment->file) }}" target="_blank" class="btn btn-sm btn-primary">
+                        👁 View
+                    </a>
+ 
+                </div>
+            @endif
+        </div>
+ 
+        <!-- Marks -->
+        <div class="form-group mt-15">
+            <label class="input-label">Total Marks</label>
+            <input type="number"
+                name="assignment_marks"
+                value="{{ old('assignment_marks', $assignment->total_marks ?? '') }}"
+                class="form-control"
+                placeholder="Enter Marks">
+        </div>
+ 
+        <!-- Deadline -->
+        <div class="form-group mt-15">
+            <label class="input-label">Deadline</label>
+            <input type="datetime-local"
+                name="assignment_deadline"
+                value="{{ old('assignment_deadline', !empty($assignment->deadline) ? date('Y-m-d\TH:i', strtotime($assignment->deadline)) : '') }}"
+                class="form-control">
+        </div>
+ 
 
     </div>
 </div>

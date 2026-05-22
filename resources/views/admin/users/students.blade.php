@@ -183,10 +183,31 @@
     </div>
 
     <div class="card">
-        <div class="card-header">
+        <div class="card-header d-flex flex-wrap align-items-center" style="gap:8px">
             @can('admin_users_export_excel')
                 <a href="{{ getAdminPanelUrl() }}/students/excel?{{ http_build_query(request()->all()) }}" class="btn btn-primary">{{ trans('admin/main.export_xls') }}</a>
             @endcan
+
+            @can('admin_users_create')
+                <button type="button" class="btn btn-success" data-toggle="modal" data-target="#importStudentsModal">
+                    <i class="fas fa-file-import"></i> Import Students
+                </button>
+            @endcan
+
+            @can('admin_users_edit')
+                <div class="d-flex align-items-center" style="gap:6px">
+                    <select id="bulkCourseSelect" class="form-control" style="min-width:220px">
+                        <option value="">-- Select Course to Assign --</option>
+                        @foreach($webinars as $webinar)
+                            <option value="{{ $webinar->id }}">{{ $webinar->slug }}</option>
+                        @endforeach
+                    </select>
+                    <button type="button" id="bulkAssignBtn" class="btn btn-primary" style="display:none">
+                        <i class="fas fa-user-plus"></i> Assign to Selected Students
+                    </button>
+                </div>
+            @endcan
+
             <div class="h-10"></div>
         </div>
 
@@ -194,6 +215,7 @@
             <div class="table-responsive text-center">
                 <table class="table table-striped font-14">
                     <tr>
+                        <th id="checkboxHeader" style="display:none"><input type="checkbox" id="selectAllStudents"></th>
                         <th>ID</th>
                         <th>{{ trans('admin/main.name') }}</th>
                         <th>University</th>
@@ -210,6 +232,7 @@
                     @foreach($users as $user)
 
                         <tr>
+                            <td class="student-checkbox-cell" style="display:none"><input type="checkbox" class="student-checkbox" value="{{ $user->id }}"></td>
                             <td>{{ $user->id }}</td>
                             <td class="text-left">
                                 <div class="d-flex align-items-center">
@@ -331,4 +354,132 @@
             </div>
         </div>
     </section>
+
+    {{-- Hidden form for bulk course assignment --}}
+    @can('admin_users_edit')
+    <form id="bulkAssignForm" action="{{ getAdminPanelUrl() }}/students/bulk-assign-course" method="POST" style="display:none">
+        @csrf
+        <input type="hidden" name="webinar_id" id="bulkWebinarId">
+        <div id="bulkStudentInputs"></div>
+    </form>
+    @endcan
+
+    {{-- Import Students Modal --}}
+    @can('admin_users_create')
+    <div class="modal fade" id="importStudentsModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Import Students from Excel</h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <form action="{{ getAdminPanelUrl() }}/students/import" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    <div class="modal-body">
+                        @if(session('import_errors') && count(session('import_errors')))
+                            <div class="alert alert-warning">
+                                <strong>Row errors:</strong>
+                                <ul class="mb-0 mt-1">
+                                    @foreach(session('import_errors') as $err)
+                                        <li>{{ $err }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+
+                        <div class="form-group">
+                            <label class="input-label">Select Excel File (.xlsx, .xls, .csv)</label>
+                            <input type="file" name="file" class="form-control" accept=".xlsx,.xls,.csv" required>
+                            @error('file')
+                                <div class="text-danger mt-1">{{ $message }}</div>
+                            @enderror
+                            <small class="text-muted mt-1 d-block">
+                                Don't have the format?
+                                <a href="{{ asset('students_import_template.xlsx') }}" download class="text-primary font-weight-bold">
+                                    <i class="fas fa-download"></i> Download Import Template
+                                </a>
+                            </small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success">Import</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    @endcan
+    @can('admin_users_edit')
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var selectAll   = document.getElementById('selectAllStudents');
+            var assignBtn   = document.getElementById('bulkAssignBtn');
+            var courseSelect = document.getElementById('bulkCourseSelect');
+
+            function showCheckboxes(show) {
+                var header = document.getElementById('checkboxHeader');
+                if (header) header.style.display = show ? '' : 'none';
+                document.querySelectorAll('.student-checkbox-cell').forEach(function (td) {
+                    td.style.display = show ? '' : 'none';
+                });
+                if (!show && selectAll) {
+                    selectAll.checked = false;
+                    document.querySelectorAll('.student-checkbox').forEach(function (cb) { cb.checked = false; });
+                }
+            }
+
+            function updateAssignBtn() {
+                var checked = document.querySelectorAll('.student-checkbox:checked').length;
+                var hasCourse = courseSelect && courseSelect.value !== '';
+                if (assignBtn) {
+                    assignBtn.style.display = (hasCourse && checked > 0) ? '' : 'none';
+                }
+            }
+
+            if (selectAll) {
+                selectAll.addEventListener('change', function () {
+                    document.querySelectorAll('.student-checkbox').forEach(function (cb) {
+                        cb.checked = selectAll.checked;
+                    });
+                    updateAssignBtn();
+                });
+            }
+
+            document.querySelectorAll('.student-checkbox').forEach(function (cb) {
+                cb.addEventListener('change', updateAssignBtn);
+            });
+
+            if (courseSelect) {
+                courseSelect.addEventListener('change', function () {
+                    var hasCourse = courseSelect.value !== '';
+                    showCheckboxes(hasCourse);
+                    updateAssignBtn();
+                });
+            }
+
+            if (assignBtn) {
+                assignBtn.addEventListener('click', function () {
+                    var webinarId = courseSelect.value;
+                    var checked   = document.querySelectorAll('.student-checkbox:checked');
+                    if (!webinarId || checked.length === 0) return;
+
+                    document.getElementById('bulkWebinarId').value = webinarId;
+                    var container = document.getElementById('bulkStudentInputs');
+                    container.innerHTML = '';
+                    checked.forEach(function (cb) {
+                        var inp = document.createElement('input');
+                        inp.type  = 'hidden';
+                        inp.name  = 'student_ids[]';
+                        inp.value = cb.value;
+                        container.appendChild(inp);
+                    });
+                    document.getElementById('bulkAssignForm').submit();
+                });
+            }
+        });
+    </script>
+    @endcan
 @endsection

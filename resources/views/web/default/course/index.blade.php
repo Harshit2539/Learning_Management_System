@@ -22,7 +22,20 @@
     @php
         $percent = $course->getProgress();
     @endphp
-
+@if(session('success'))
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            $.toast({
+                heading: '',
+                text: '{{ session('success') }}',
+                bgColor: '#43d477',
+                hideAfter: 5000,
+                position: 'top-right',
+                icon: 'success'
+            });
+        });
+    </script>
+@endif
     <section class="container course-content-section {{ $course->type }} {{ ($hasBought or $percent) ? 'has-progress-bar' : '' }}">
         <div class="row">
             <div class="col-12 col-lg-8">
@@ -111,8 +124,153 @@
                         </div>
 
                     </div>
+  @if(isset($custompdfpreviewattched) && !empty($custompdfpreviewattched))
 
+@php
+    $isExpired = !empty($custompdfpreviewattched->deadline) && strtotime(date('Y-m-d')) > strtotime($custompdfpreviewattched->deadline);
+@endphp
 
+<div class="mt-35">
+
+    <div class="card shadow-sm border-0 rounded-lg overflow-hidden">
+
+        <div style="background: linear-gradient(90deg, #303753, #2d385e); padding: 15px 20px;">
+            <h5 class="mb-0 text-white font-weight-bold">
+                <i class="fas fa-book-open mr-2"></i> Assignment Details
+            </h5>
+        </div>
+
+        <div class="card-body bg-white">
+
+            {{-- Expired Message --}}
+            @if($isExpired)
+               <div class="alert alert-danger mb-2 py-1 px-2" style="font-weight:600; font-size:12px; line-height:1.2;">
+    <i class="fas fa-exclamation-circle mr-1"></i>
+    This Assignment is Expired
+</div>
+            @endif
+
+            <div class="d-flex justify-content-between align-items-start mb-4">
+
+                {{-- Left Side --}}
+                <div style="flex:1; margin-right:15px;">
+
+                    <div class="mb-2">
+                        <label class="font-weight-bold text-dark mb-1">Assignment Title</label>
+                        <div class="form-control bg-light border-0 shadow-sm">
+                            {{ $custompdfpreviewattched->title }}
+                        </div>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="font-weight-bold text-dark mb-1">Total Marks</label>
+                        <div class="form-control bg-light border-0 shadow-sm">
+                            {{ $custompdfpreviewattched->total_marks }}
+                        </div>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="font-weight-bold text-dark mb-1">Deadline</label>
+                        <div class="form-control bg-light border-0 shadow-sm">
+                            {{ !empty($custompdfpreviewattched->deadline) ? date('Y-m-d', strtotime($custompdfpreviewattched->deadline)) : '-' }}
+                        </div>
+                    </div>
+
+                </div>
+
+                {{-- Marks Box --}}
+                <div style="width:120px; text-align:center;">
+                    <div style="background: linear-gradient(135deg, #ff6b6b, #f06595);
+                                color:white;
+                                font-weight:bold;
+                                font-size:20px;
+                                border-radius:10px;
+                                padding:15px 0;
+                                box-shadow:0 3px 6px rgba(0,0,0,0.2);">
+                        {{ !empty($custompdfpreviewattched->admin_marks) ? $custompdfpreviewattched->admin_marks : '0' }}
+                        <div style="font-size:12px; font-weight:500; margin-top:3px;">Obtained</div>
+                    </div>
+                </div>
+
+            </div>
+
+            {{-- Assignment PDF --}}
+            <div class="mt-3">
+                <label class="font-weight-bold text-dark mb-2 d-block">
+                    <i class="fas fa-file-pdf text-danger mr-1"></i> Assignment
+                </label>
+
+                <form action="{{ route('submitcustomassignmentpreview') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+
+                    <div class="p-3 border rounded bg-light shadow-sm">
+
+                        {{-- Original Assignment PDF --}}
+                        @if(!empty($custompdfpreviewattched->file))
+                            <div class="mb-2">
+                                <a href="{{ asset($custompdfpreviewattched->file) }}"
+                                   download
+                                   class="btn btn-outline-primary btn-sm px-3">
+                                    <i class="fas fa-download mr-1"></i> Download PDF
+                                </a>
+                            </div>
+                        @endif
+
+                        <input type="hidden" name="assignment_id" value="{{ $custompdfpreviewattched->id }}">
+
+                        {{-- If marks exist --}}
+                        @if(!empty($custompdfpreviewattched->admin_marks))
+
+                            @if(!empty($custompdfpreviewattched->pdf_review))
+                                <div class="mb-2">
+                                    <a href="{{ asset($custompdfpreviewattched->pdf_review) }}"
+                                       download
+                                       class="btn btn-sm px-3 text-white"
+                                       style="background-color:#3ba043; border:none;">
+                                        <i class="fas fa-file-pdf mr-1"></i> Download Submitted Assignment
+                                    </a>
+                                </div>
+                            @else
+                                <span class="text-muted">Reviewed PDF not available</span>
+                            @endif
+
+                        @else
+
+                            {{-- If expired, disable upload --}}
+                            @if(!$isExpired)
+
+                                <div class="mb-2">
+                                    <input type="file" name="assignment_pdf" class="form-control" accept="application/pdf" required>
+                                </div>
+
+                                <button type="submit" class="btn px-3 text-white" style="background-color:#1f3c88; border:none;">
+                                    <i class="fas fa-upload mr-1"></i> Upload
+                                </button>
+
+                                <small class="text-muted d-block mt-1">
+                                    Upload or replace assignment PDF.
+                                </small>
+
+                            @else
+
+                                <div class="text-danger font-weight-bold">
+                                    Submission Closed
+                                </div>
+
+                            @endif
+
+                        @endif
+
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+@endif
                     @if(
                            !empty(getFeaturesSettings("frontend_coupons_display_type")) and
                            getFeaturesSettings("frontend_coupons_display_type") == "after_content" and
@@ -627,3 +785,6 @@
         </script>
     @endif
 @endpush
+
+
+

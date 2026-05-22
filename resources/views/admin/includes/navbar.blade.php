@@ -41,8 +41,8 @@
                                     <i class="fa fa-info"></i>
                                 </div>
                                 <div class="dropdown-item-desc">
-                                   Rocket LMS Version 1.9.7
-                                   <div class="time text-primary">All rights reserved for Rocket Soft</div>
+                                   BradFord LMS Version 1.9.7
+                                   <div class="time text-primary">All rights reserved for BradFord Soft</div>
                                 </div>
                             </a>
                     </div>

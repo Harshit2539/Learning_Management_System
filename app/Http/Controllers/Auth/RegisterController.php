@@ -11,12 +11,14 @@ use App\Models\RewardAccounting;
 use App\Models\Role;
 use App\Models\UserMeta;
 use App\User;
+use App\Mail\WelcomeUser;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\MessageBag;
 use Illuminate\Validation\ValidationException;
@@ -249,6 +251,16 @@ class RegisterController extends Controller
         $user = $this->create($request->all());
 
         event(new Registered($user));
+
+        // Send welcome email
+        $loginIdentifier = !empty($user->email) ? $user->email : $user->mobile;
+        if (!empty($user->email)) {
+            try {
+                Mail::to($user->email)->send(new WelcomeUser($user->full_name, $loginIdentifier));
+            } catch (\Exception $e) {
+                // mail failure should not block registration
+            }
+        }
 
         $notifyOptions = [
             '[u.name]' => $user->full_name,

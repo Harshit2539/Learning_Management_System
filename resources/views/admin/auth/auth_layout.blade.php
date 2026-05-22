@@ -42,7 +42,7 @@
             <div class="absolute-bottom-left index-2">
             <div class="text-light p-5 pb-2">
               <div class="mb-2 pb-3">
-                <h1 class="mb-2 display-4 font-weight-bold">Rocket LMS</h1>
+                <h1 class="mb-2 display-4 font-weight-bold">BradFord LMS</h1>
                 <h5 class="font-weight-normal text-muted-transparent">fully-featured educational platform</h5>
               </div>
               All rights reserved

@@ -57,11 +57,14 @@ class DashboardController extends Controller
             $data['monthlySalesCount'] = count($monthlySales) ? $monthlySales->sum('total_amount') : 0;
             $data['monthlyChart'] = $this->getMonthlySalesOrPurchase($user);
         } else {
-            $webinarsIds = $user->getPurchasedCoursesIds();
-
-            $webinars = Webinar::whereIn('id', $webinarsIds)
-                ->where('status', 'active')
-                ->get();
+            $webinarsCount = Sale::where('buyer_id', $user->id)
+                ->whereNotNull('webinar_id')
+                ->whereNull('refund_at')
+                ->where('access_to_purchased_item', true)
+                ->whereHas('webinar', function ($q) {
+                    $q->where('status', 'active');
+                })
+                ->count();
 
             $reserveMeetings = ReserveMeeting::where('user_id', $user->id)
                 ->whereHas('sale', function ($query) {
@@ -80,7 +83,7 @@ class DashboardController extends Controller
                 ->where('status', 'active')
                 ->get();
 
-            $data['webinarsCount'] = count($webinars);
+            $data['webinarsCount'] = $webinarsCount;
             $data['supportsCount'] = count($supports);
             $data['commentsCount'] = count($comments);
             $data['reserveMeetingsCount'] = count($reserveMeetings);

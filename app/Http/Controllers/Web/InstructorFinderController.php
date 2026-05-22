@@ -23,64 +23,81 @@ class InstructorFinderController extends Controller
 
     public function index(Request $request)
     {
-        $query = User::where('users.status', 'active')
-            ->where(function ($query) {
-                $query->where('users.ban', false)
-                    ->orWhere(function ($query) {
-                        $query->whereNotNull('users.ban_end_at')
-                            ->orWhere('users.ban_end_at', '<', time());
-                    });
-            })
-            ->with([
-                'meeting' => function ($query) {
-                    $query->with('meetingTimes');
-                    $query->withCount('meetingTimes');
-                },
-                'occupations'
-            ]);
+        try {
+            $query = User::where('users.status', 'active')
+                ->where(function ($query) {
+                    $query->where('users.ban', false)
+                        ->orWhere(function ($query) {
+                            $query->whereNotNull('users.ban_end_at')
+                                ->orWhere('users.ban_end_at', '<', time());
+                        });
+                })
+                ->with([
+                    'meeting' => function ($query) {
+                        $query->with('meetingTimes');
+                        $query->withCount('meetingTimes');
+                    },
+                    'occupations'
+                ]);
 
-        $query = $this->handleFilters($query, $request);
+            $query = $this->handleFilters($query, $request);
 
-        $query = $query->addSelect(DB::raw('ST_AsText(location) as userLocation'));
+            $query = $query->addSelect(DB::raw('ST_AsText(location) as userLocation'));
 
-        $instructors = deepClone($query)->paginate(6);
+            $instructors = deepClone($query)->paginate(6);
 
-        foreach ($instructors as $instructor) {
-            $instructor->location = $instructor->userLocation;
+            foreach ($instructors as $instructor) {
+                $instructor->location = $instructor->userLocation;
+            }
+
+            if ($request->ajax()) {
+                return $this->handleLoadMoreHtml($instructors);
+            }
+
+            $mapUsers = $query->whereNotNull('location')->get();
+
+            foreach ($mapUsers as $mapUser) {
+                $mapUser->price = $mapUser->meeting ? convertPriceToUserCurrency($mapUser->meeting->amount) : 0;
+                $mapUser->avatar = $mapUser->getAvatar();
+                $mapUser->rate = $mapUser->rates();
+                $mapUser->profileUrl = url($mapUser->getProfileUrl());
+
+                $mapUser->location = \Geo::get_geo_array($mapUser->userLocation);
+            }
+
+            $seoSettings = getSeoMetas('instructor_finder');
+            $pageTitle = !empty($seoSettings['title']) ? $seoSettings['title'] : trans('home.instructors');
+            $pageDescription = !empty($seoSettings['description']) ? $seoSettings['description'] : trans('home.instructors');
+            $pageRobot = getPageRobot('instructor_finder');
+
+            $data = [
+                'pageTitle' => $pageTitle,
+                'pageDescription' => $pageDescription,
+                'pageRobot' => $pageRobot,
+                'mapUsers' => $mapUsers,
+                'instructors' => $instructors,
+            ];
+
+            $locationData = $this->getLocationData($request);
+            $data = array_merge($data, $locationData);
+
+            return view('web.default.instructorFinder.index', $data);
+
+        } catch (\Exception $e) {
+            \Log::error('InstructorFinder error: ' . $e->getMessage());
+
+            $toastData = [
+                'title'  => trans('public.request_failed'),
+                'msg'    => trans('public.something_went_wrong'),
+                'status' => 'error',
+            ];
+
+            if ($request->ajax()) {
+                return response()->json(['error' => trans('public.something_went_wrong')], 422);
+            }
+
+            return redirect()->back()->with(['toast' => $toastData]);
         }
-
-        if ($request->ajax()) {
-            return $this->handleLoadMoreHtml($instructors);
-        }
-
-        $mapUsers = $query->whereNotNull('location')->get();
-
-        foreach ($mapUsers as $mapUser) {
-            $mapUser->price = $mapUser->meeting ? convertPriceToUserCurrency($mapUser->meeting->amount) : 0;
-            $mapUser->avatar = $mapUser->getAvatar();
-            $mapUser->rate = $mapUser->rates();
-            $mapUser->profileUrl = url($mapUser->getProfileUrl());
-
-            $mapUser->location = \Geo::get_geo_array($mapUser->userLocation);
-        }
-
-        $seoSettings = getSeoMetas('instructor_finder');
-        $pageTitle = !empty($seoSettings['title']) ? $seoSettings['title'] : trans('home.instructors');
-        $pageDescription = !empty($seoSettings['description']) ? $seoSettings['description'] : trans('home.instructors');
-        $pageRobot = getPageRobot('instructor_finder');
-
-        $data = [
-            'pageTitle' => $pageTitle,
-            'pageDescription' => $pageDescription,
-            'pageRobot' => $pageRobot,
-            'mapUsers' => $mapUsers,
-            'instructors' => $instructors,
-        ];
-
-        $locationData = $this->getLocationData($request);
-        $data = array_merge($data, $locationData);
-
-        return view('web.default.instructorFinder.index', $data);
     }
 
     private function handleLoadMoreHtml($instructors)
@@ -308,57 +325,80 @@ class InstructorFinderController extends Controller
 
     private function handleDaysAndTimeFilter($query, Request $request)
     {
-        $days = $request->get('day');
+        $days    = $request->get('day');
         $minTime = $request->get('min_time');
         $maxTime = $request->get('max_time');
 
-        if (empty($minTime) or $minTime < 0) {
-            $minTime = 0;
+        // Normalise to a valid HH:MM string so Carbon never receives a bare integer
+        if (empty($minTime) || (int) $minTime < 0) {
+            $minTime = '0:00';
+        }
+        if (!str_contains((string) $minTime, ':')) {
+            $minTime = $minTime . ':00';
         }
 
-        if (empty($maxTime) or $maxTime > 23) {
-            $maxTime = 23;
+        if (empty($maxTime) || (int) $maxTime > 23) {
+            $maxTime = '23:59';
         }
-
         if ($maxTime == 23) {
             $maxTime = '23:59';
         }
+        if (!str_contains((string) $maxTime, ':')) {
+            $maxTime = $maxTime . ':00';
+        }
 
-        if (isset($minTime) and isset($maxTime)) {
-
+        try {
             $minTimeFilter = Carbon::createFromTimeString($minTime);
             $maxTimeFilter = Carbon::createFromTimeString($maxTime);
+        } catch (\Exception $e) {
+            // If time strings are still unparseable, skip the filter entirely
+            \Log::warning('InstructorFinder: invalid time filter value — ' . $e->getMessage());
+            return $query;
+        }
 
-            $meetingsTimes = null;
+        $meetingsTimes = null;
 
-            if (!empty($days) and is_array($days)) {
-                $meetingsTimes = MeetingTime::whereIn('meeting_times.day_label', $days)
-                    ->get();
-            } else {
-                $meetingsTimes = MeetingTime::query()->get();
-            }
+        if (!empty($days) and is_array($days)) {
+            $meetingsTimes = MeetingTime::whereIn('meeting_times.day_label', $days)->get();
+        } else {
+            $meetingsTimes = MeetingTime::query()->get();
+        }
 
-            if (!empty($meetingsTimes)) {
-                $meetingsIds = [];
+        if (!empty($meetingsTimes)) {
+            $meetingsIds = [];
 
-                foreach ($meetingsTimes as $meetingsTime) {
-                    $time = explode('-', $meetingsTime->time);
-
-                    $startTime = Carbon::createFromTimeString($time[0]);
-                    $endTime = Carbon::createFromTimeString($time[1]);
-
-                    if ($minTimeFilter <= $startTime and $maxTimeFilter >= $endTime) {
-                        $meetingsIds[] = $meetingsTime->meeting_id;
-                    }
+            foreach ($meetingsTimes as $meetingsTime) {
+                // Guard: skip rows where time column is missing or malformed
+                if (empty($meetingsTime->time) || !str_contains($meetingsTime->time, '-')) {
+                    continue;
                 }
 
-                $userIds = Meeting::whereIn('id', $meetingsIds)
-                    ->where('disabled', false)
-                    ->pluck('creator_id')
-                    ->toArray();
+                $parts = explode('-', $meetingsTime->time);
 
-                $query->whereIn('users.id', $userIds);
+                // Guard: must have exactly two parts
+                if (count($parts) !== 2 || empty(trim($parts[0])) || empty(trim($parts[1]))) {
+                    continue;
+                }
+
+                try {
+                    $startTime = Carbon::createFromTimeString(trim($parts[0]));
+                    $endTime   = Carbon::createFromTimeString(trim($parts[1]));
+                } catch (\Exception $e) {
+                    \Log::warning('InstructorFinder: skipping malformed meeting time "' . $meetingsTime->time . '" — ' . $e->getMessage());
+                    continue;
+                }
+
+                if ($minTimeFilter <= $startTime && $maxTimeFilter >= $endTime) {
+                    $meetingsIds[] = $meetingsTime->meeting_id;
+                }
             }
+
+            $userIds = Meeting::whereIn('id', $meetingsIds)
+                ->where('disabled', false)
+                ->pluck('creator_id')
+                ->toArray();
+
+            $query->whereIn('users.id', $userIds);
         }
 
         return $query;
