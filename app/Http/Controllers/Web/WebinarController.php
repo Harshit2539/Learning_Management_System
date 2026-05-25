@@ -626,13 +626,16 @@ public function submitCustomAssignmentPreview(Request $request)
             ->where('expired_at', '>', time())
             ->get();
     }
-    ////Anjali /////
+    ////Harsh Tyagi /////
 //    dd($user->id);
 
-$custompdfpreviewattched = DB::table('assignments')
-    ->where('course_id', $course->id)
-    ->where('user_id', $user->id) // ✅ add this line
-    ->first();
+$custompdfpreviewattched = null;
+if (!empty($user)) {
+    $custompdfpreviewattched = DB::table('assignments')
+        ->where('course_id', $course->id)
+        ->where('user_id', $user->id)
+        ->first();
+}
 
     $data = [
         'pageTitle' => $course->title,
