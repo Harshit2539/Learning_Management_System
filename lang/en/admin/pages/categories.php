@@ -39,4 +39,6 @@ return [
     'trend_color' => 'Trend color',
     'trend_color_placeholder' => 'like: #3dbca7 or rgb(0,0,0)',
     'create_trend_category' => 'Create trend category',
+    'category_created_successfully' => 'Category created successfully.',
+    'category_updated_successfully' => 'Category updated successfully.',
 ];

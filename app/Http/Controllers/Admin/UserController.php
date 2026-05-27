@@ -484,13 +484,22 @@ class UserController extends Controller
         $request->merge([$username => $data['username']]);
         unset($data['username']);
 
-        $this->validate($request, [
-            $username => ($username == 'mobile') ? 'required|numeric|unique:users' : 'required|string|email|max:255|unique:users',
-            'full_name' => 'required|min:3|max:128',
-            'role_id' => 'required|exists:roles,id',
-            'password' => 'required|string|min:6',
-            'status' => 'required',
-        ]);
+        try {
+            $this->validate($request, [
+                $username => ($username == 'mobile') ? 'required|numeric|unique:users' : 'required|string|email|max:255|unique:users',
+                'full_name' => 'required|min:3|max:128',
+                'role_id' => 'required|exists:roles,id',
+                'password' => 'required|string|min:6',
+                'status' => 'required',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $toastData = [
+                'title' => trans('public.request_failed'),
+                'msg'   => trans('public.fix_errors_and_try_again'),
+                'status' => 'error'
+            ];
+            return back()->withErrors($e->errors())->withInput()->with(['toast' => $toastData]);
+        }
 
         if (!empty($data['role_id'])) {
             $role = Role::find($data['role_id']);
@@ -542,13 +551,18 @@ class UserController extends Controller
                     }
                 }
 
-                return redirect(getAdminPanelUrl() . '/users/' . $user->id . '/edit');
+                $toastData = [
+                    'title' => trans('public.request_success'),
+                    'msg'   => trans('admin/pages/users.user_created_successfully'),
+                    'status' => 'success'
+                ];
+                return redirect(getAdminPanelUrl() . '/users/' . $user->id . '/edit')->with(['toast' => $toastData]);
             }
         }
 
         $toastData = [
-            'title' => '',
-            'msg' => 'Role not find!',
+            'title' => trans('public.request_failed'),
+            'msg' => trans('admin/pages/users.role_not_found'),
             'status' => 'error'
         ];
         return back()->with(['toast' => $toastData]);
@@ -885,18 +899,27 @@ class UserController extends Controller
 
         $user = User::findOrFail($id);
 
-        $this->validate($request, [
-            'full_name' => 'required|min:3|max:128',
-            'email' => (!empty($user->email)) ? 'required|email|unique:users,email,' . $user->id . ',id,deleted_at,NULL' : 'nullable|email|unique:users',
-            'mobile' => (!empty($user->mobile)) ? 'required|numeric|unique:users,mobile,' . $user->id . ',id,deleted_at,NULL' : 'nullable|numeric|unique:users',
-            'password' => 'nullable|string',
-            'bio' => 'nullable|string|min:3|max:48',
-            'about' => 'nullable|string|min:3',
-            'certificate_additional' => 'nullable|string|max:255',
-            'status' => 'required|' . Rule::in(User::$statuses),
-            'ban_start_at' => 'required_if:ban,on',
-            'ban_end_at' => 'required_if:ban,on',
-        ]);
+        try {
+            $this->validate($request, [
+                'full_name' => 'required|min:3|max:128',
+                'email' => (!empty($user->email)) ? 'required|email|unique:users,email,' . $user->id . ',id,deleted_at,NULL' : 'nullable|email|unique:users',
+                'mobile' => (!empty($user->mobile)) ? 'required|numeric|unique:users,mobile,' . $user->id . ',id,deleted_at,NULL' : 'nullable|numeric|unique:users',
+                'password' => 'nullable|string',
+                'bio' => 'nullable|string|min:3|max:48',
+                'about' => 'nullable|string|min:3',
+                'certificate_additional' => 'nullable|string|max:255',
+                'status' => 'required|' . Rule::in(User::$statuses),
+                'ban_start_at' => 'required_if:ban,on',
+                'ban_end_at' => 'required_if:ban,on',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $toastData = [
+                'title' => trans('public.request_failed'),
+                'msg'   => trans('public.fix_errors_and_try_again'),
+                'status' => 'error'
+            ];
+            return back()->withErrors($e->errors())->withInput()->with(['toast' => $toastData]);
+        }
 
         $data = $request->all();
 
@@ -992,7 +1015,12 @@ class UserController extends Controller
             sendNotification("user_role_change", $notifyOptions, $user->id);
         }
 
-        return redirect()->back();
+        $toastData = [
+            'title' => trans('public.request_success'),
+            'msg'   => trans('admin/pages/users.user_updated_successfully'),
+            'status' => 'success'
+        ];
+        return redirect()->back()->with(['toast' => $toastData]);
     }
 
     private function handleUserCertificateAdditional($userId, $value)
@@ -1031,7 +1059,12 @@ class UserController extends Controller
 
         $user->save();
 
-        return redirect()->back();
+        $toastData = [
+            'title' => trans('public.request_success'),
+            'msg'   => trans('admin/pages/users.user_image_updated_successfully'),
+            'status' => 'success'
+        ];
+        return redirect()->back()->with(['toast' => $toastData]);
     }
 
     public function updateFormFields(Request $request, $id)
@@ -1083,6 +1116,7 @@ class UserController extends Controller
         $this->storeUserCommissions($user, $data);
 
         if (!empty($data['bank_id'])) {
+
             UserSelectedBank::query()->where('user_id', $user->id)->delete();
 
             $userSelectedBank = UserSelectedBank::query()->create([
@@ -1107,7 +1141,12 @@ class UserController extends Controller
             }
         }
 
-        return redirect()->back();
+        $toastData = [
+            'title' => trans('public.request_success'),
+            'msg'   => trans('admin/pages/users.user_financial_updated_successfully'),
+            'status' => 'success'
+        ];
+        return redirect()->back()->with(['toast' => $toastData]);
     }
 
     private function storeUserCommissions($user, $data)
@@ -1159,7 +1198,12 @@ class UserController extends Controller
             }
         }
 
-        return redirect()->back();
+        $toastData = [
+            'title' => trans('public.request_success'),
+            'msg'   => trans('admin/pages/users.user_occupations_updated_successfully'),
+            'status' => 'success'
+        ];
+        return redirect()->back()->with(['toast' => $toastData]);
     }
 
     public function badgesUpdate(Request $request, $id)
@@ -1497,7 +1541,12 @@ class UserController extends Controller
                 'created_at' => time(),
             ]);
 
-            return redirect()->back();
+            $toastData = [
+                'title' => trans('public.request_success'),
+                'msg'   => trans('admin/pages/users.user_package_updated_successfully'),
+                'status' => 'success'
+            ];
+            return redirect()->back()->with(['toast' => $toastData]);
         }
 
         abort(404);
@@ -1551,7 +1600,12 @@ class UserController extends Controller
                 }
             }
 
-            return redirect()->back();
+            $toastData = [
+                'title' => trans('public.request_success'),
+                'msg'   => trans('admin/pages/users.user_meeting_settings_updated_successfully'),
+                'status' => 'success'
+            ];
+            return redirect()->back()->with(['toast' => $toastData]);
         }
 
         abort(404);

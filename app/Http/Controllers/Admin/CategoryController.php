@@ -46,10 +46,19 @@ class CategoryController extends Controller
     {
         $this->authorize('admin_categories_create');
 
-        $this->validate($request, [
-            'title' => 'required|min:3|max:128',
-            'slug' => 'nullable|max:255|unique:categories,slug',
-        ]);
+        try {
+            $this->validate($request, [
+                'title' => 'required|min:3|max:128',
+                'slug' => 'nullable|max:255|unique:categories,slug',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $toastData = [
+                'title' => trans('public.request_failed'),
+                'msg'   => trans('public.fix_errors_and_try_again'),
+                'status' => 'error'
+            ];
+            return back()->withErrors($e->errors())->withInput()->with(['toast' => $toastData]);
+        }
 
         $data = $request->all();
 
@@ -79,7 +88,12 @@ class CategoryController extends Controller
 
         removeContentLocale();
 
-        return redirect(getAdminPanelUrl() . '/categories');
+        $toastData = [
+            'title' => trans('public.request_success'),
+            'msg'   => trans('admin/pages/categories.category_created_successfully'),
+            'status' => 'success'
+        ];
+        return redirect(getAdminPanelUrl() . '/categories')->with(['toast' => $toastData]);
     }
 
     public function edit(Request $request, $id)
@@ -109,10 +123,19 @@ class CategoryController extends Controller
 
         $category = Category::findOrFail($id);
 
-        $this->validate($request, [
-            'title' => 'required|min:3|max:255',
-            'slug' => 'nullable|max:255|unique:categories,slug,' . $category->id,
-        ]);
+        try {
+            $this->validate($request, [
+                'title' => 'required|min:3|max:255',
+                'slug' => 'nullable|max:255|unique:categories,slug,' . $category->id,
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $toastData = [
+                'title' => trans('public.request_failed'),
+                'msg'   => trans('public.fix_errors_and_try_again'),
+                'status' => 'error'
+            ];
+            return back()->withErrors($e->errors())->withInput()->with(['toast' => $toastData]);
+        }
 
         $data = $request->all();
 
@@ -132,12 +155,16 @@ class CategoryController extends Controller
         $hasSubCategories = (!empty($request->get('has_sub')) and $request->get('has_sub') == 'on');
         $this->setSubCategory($category, $request->get('sub_categories'), $hasSubCategories, $data['locale']);
 
-
         cache()->forget(Category::$cacheKey);
 
         removeContentLocale();
 
-        return redirect(getAdminPanelUrl() . '/categories');
+        $toastData = [
+            'title' => trans('public.request_success'),
+            'msg'   => trans('admin/pages/categories.category_updated_successfully'),
+            'status' => 'success'
+        ];
+        return redirect(getAdminPanelUrl() . '/categories')->with(['toast' => $toastData]);
     }
 
     public function destroy(Request $request, $id)

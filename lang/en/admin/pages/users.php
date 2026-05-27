@@ -144,4 +144,12 @@ return [
     'contacts_message' => 'Contact Message',
 
     'user_role_updated' => 'The user role changed.',
+    'user_created_successfully' => 'User created successfully.',
+    'user_updated_successfully' => 'User updated successfully.',
+    'user_image_updated_successfully' => 'User image updated successfully.',
+    'user_financial_updated_successfully' => 'Financial information updated successfully.',
+    'user_occupations_updated_successfully' => 'User occupations updated successfully.',
+    'user_package_updated_successfully' => 'Registration package updated successfully.',
+    'user_meeting_settings_updated_successfully' => 'Meeting settings updated successfully.',
+    'role_not_found' => 'Selected role was not found.',
 ];

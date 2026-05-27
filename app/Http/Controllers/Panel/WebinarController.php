@@ -329,6 +329,16 @@ class WebinarController extends Controller
 
         $this->validate($request, $rules);
 
+        $titleExists = WebinarTranslation::where('title', $request->get('title'))->exists();
+        if ($titleExists) {
+            $toastData = [
+                'title' => trans('public.request_failed'),
+                'msg'   => trans('webinars.duplicate_title_error'),
+                'status' => 'error'
+            ];
+            return back()->withErrors(['title' => trans('webinars.duplicate_title_error')])->withInput()->with(['toast' => $toastData]);
+        }
+
         $data = $request->all();
         $data = $this->handleVideoDemoData($request, $data, "course_demo_" . time());
 
@@ -370,7 +380,12 @@ class WebinarController extends Controller
             $url = '/panel/webinars/' . $webinar->id . '/step/2';
         }
 
-        return redirect($url);
+        $toastData = [
+            'title' => trans('public.request_success'),
+            'msg'   => trans('webinars.course_created_successfully'),
+            'status' => 'success'
+        ];
+        return redirect($url)->with(['toast' => $toastData]);
     }
 
     public function edit(Request $request, $id, $step = 1)
@@ -585,6 +600,18 @@ class WebinarController extends Controller
                 'image_cover' => 'required',
                 'description' => 'required',
             ];
+
+            $titleExists = WebinarTranslation::where('title', $request->get('title'))
+                ->where('webinar_id', '!=', $id)
+                ->exists();
+            if ($titleExists) {
+                $toastData = [
+                    'title' => trans('public.request_failed'),
+                    'msg'   => trans('webinars.duplicate_title_error'),
+                    'status' => 'error'
+                ];
+                return back()->withErrors(['title' => trans('webinars.duplicate_title_error')])->withInput()->with(['toast' => $toastData]);
+            }
         }
 
         if ($currentStep == 2) {
@@ -858,8 +885,12 @@ class WebinarController extends Controller
 
         if ($webinarRulesRequired) {
             $url = '/panel/webinars/' . $webinar->id . '/step/8';
-
-            return redirect($url)->withErrors(['rules' => trans('validation.required', ['attribute' => 'rules'])]);
+            $toastData = [
+                'title' => trans('public.request_failed'),
+                'msg'   => trans('validation.required', ['attribute' => 'rules']),
+                'status' => 'error'
+            ];
+            return redirect($url)->withErrors(['rules' => trans('validation.required', ['attribute' => 'rules'])])->with(['toast' => $toastData]);
         }
 
         if ($status != Webinar::$active and !$getNextStep and !$isDraft and !$webinarRulesRequired) {
@@ -873,7 +904,12 @@ class WebinarController extends Controller
             sendNotification("content_review_request", $notifyOptions, 1);
         }
 
-        return redirect($url);
+        $toastData = [
+            'title' => trans('public.request_success'),
+            'msg'   => $getNextStep ? trans('webinars.step_saved_successfully') : trans('webinars.course_updated_successfully'),
+            'status' => 'success'
+        ];
+        return redirect($url)->with(['toast' => $toastData]);
     }
 
     public function destroy(Request $request, $id)

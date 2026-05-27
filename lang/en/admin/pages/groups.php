@@ -29,4 +29,8 @@ return [
     'admin_group_create' => 'Groups Create',
     'admin_group_edit' => 'Groups Edit',
     'admin_group_delete' => 'Groups Delete',
+    'group_created_successfully' => 'Group created successfully.',
+    'group_updated_successfully' => 'Group updated successfully.',
+    'group_deleted_successfully' => 'Group deleted successfully.',
+    'group_package_updated_successfully' => 'Group registration package updated successfully.',
 ];

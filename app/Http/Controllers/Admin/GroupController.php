@@ -47,10 +47,19 @@ class GroupController extends Controller
     {
         $this->authorize('admin_group_create');
 
-        $this->validate($request, [
-            'users' => 'required|array',
-            'name' => 'required',
-        ]);
+        try {
+            $this->validate($request, [
+                'users' => 'required|array',
+                'name' => 'required',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $toastData = [
+                'title' => trans('public.request_failed'),
+                'msg'   => trans('public.fix_errors_and_try_again'),
+                'status' => 'error'
+            ];
+            return back()->withErrors($e->errors())->withInput()->with(['toast' => $toastData]);
+        }
 
         $data = $request->all();
         $data['created_at'] = time();
@@ -81,7 +90,12 @@ class GroupController extends Controller
             }
         }
 
-        return redirect(getAdminPanelUrl() . '/users/groups');
+        $toastData = [
+            'title' => trans('public.request_success'),
+            'msg'   => trans('admin/pages/groups.group_created_successfully'),
+            'status' => 'success'
+        ];
+        return redirect(getAdminPanelUrl() . '/users/groups')->with(['toast' => $toastData]);
     }
 
     public function edit($id)
@@ -110,11 +124,20 @@ class GroupController extends Controller
     {
         $this->authorize('admin_group_edit');
 
-        $this->validate($request, [
-            'users' => 'required|array',
-            'percent' => 'nullable',
-            'name' => 'required',
-        ]);
+        try {
+            $this->validate($request, [
+                'users' => 'required|array',
+                'percent' => 'nullable',
+                'name' => 'required',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $toastData = [
+                'title' => trans('public.request_failed'),
+                'msg'   => trans('public.fix_errors_and_try_again'),
+                'status' => 'error'
+            ];
+            return back()->withErrors($e->errors())->withInput()->with(['toast' => $toastData]);
+        }
 
         $group = Group::findOrFail($id);
         $data = $request->all();
@@ -146,7 +169,12 @@ class GroupController extends Controller
             }
         }
 
-        return redirect(getAdminPanelUrl() . '/users/groups');
+        $toastData = [
+            'title' => trans('public.request_success'),
+            'msg'   => trans('admin/pages/groups.group_updated_successfully'),
+            'status' => 'success'
+        ];
+        return redirect(getAdminPanelUrl() . '/users/groups')->with(['toast' => $toastData]);
     }
 
     private function storeUserCommissions($group, $data)
@@ -186,18 +214,32 @@ class GroupController extends Controller
 
         Group::find($id)->delete();
 
-        return redirect(getAdminPanelUrl() . '/users/groups');
+        $toastData = [
+            'title' => trans('public.request_success'),
+            'msg'   => trans('admin/pages/groups.group_deleted_successfully'),
+            'status' => 'success'
+        ];
+        return redirect(getAdminPanelUrl() . '/users/groups')->with(['toast' => $toastData]);
     }
 
     public function groupRegistrationPackage(Request $request, $id)
     {
-        $this->validate($request, [
-            'instructors_count' => 'nullable|numeric',
-            'students_count' => 'nullable|numeric',
-            'courses_capacity' => 'nullable|numeric',
-            'courses_count' => 'nullable|numeric',
-            'meeting_count' => 'nullable|numeric',
-        ]);
+        try {
+            $this->validate($request, [
+                'instructors_count' => 'nullable|numeric',
+                'students_count' => 'nullable|numeric',
+                'courses_capacity' => 'nullable|numeric',
+                'courses_count' => 'nullable|numeric',
+                'meeting_count' => 'nullable|numeric',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $toastData = [
+                'title' => trans('public.request_failed'),
+                'msg'   => trans('public.fix_errors_and_try_again'),
+                'status' => 'error'
+            ];
+            return back()->withErrors($e->errors())->withInput()->with(['toast' => $toastData]);
+        }
 
         $group = Group::findOrFail($id);
 
@@ -215,6 +257,11 @@ class GroupController extends Controller
             'created_at' => time(),
         ]);
 
-        return redirect()->back();
+        $toastData = [
+            'title' => trans('public.request_success'),
+            'msg'   => trans('admin/pages/groups.group_package_updated_successfully'),
+            'status' => 'success'
+        ];
+        return redirect()->back()->with(['toast' => $toastData]);
     }
 }

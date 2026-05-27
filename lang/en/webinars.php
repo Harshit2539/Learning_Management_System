@@ -141,7 +141,10 @@ return [
 	'youtube' => 'Youtube',
     'vimeo' => 'Vimeo',
     'show_only_bundles' => 'Show only bundles',
-    'your_reviews_successfully_submitted' => 'Your reviews was successfully submitted'
-
-    
+    'your_reviews_successfully_submitted' => 'Your reviews was successfully submitted',
+    'duplicate_title_error' => 'A course with this title already exists. Please choose a different title.',
+    'fix_errors_and_try_again' => 'Please fix the errors below and try again.',
+    'course_created_successfully' => 'Course created successfully.',
+    'course_updated_successfully' => 'Course updated successfully.',
+    'step_saved_successfully' => 'Step saved successfully.',
 ];

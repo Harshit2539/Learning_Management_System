@@ -306,6 +306,7 @@ return [
 
     'request_failed' => 'Request Failed',
     'request_success' => 'Request done successfully!',
+    'fix_errors_and_try_again' => 'Please fix the errors below and try again.',
 
     'cart_page_title' => 'Cart',
     'checkout_page_title' => 'Checkout',

@@ -53,15 +53,25 @@ class DeleteAccountRequestsController extends Controller
     {
         $this->authorize('admin_delete_account_requests_confirm');
 
-        $request = DeleteAccountRequest::findOrFail($id);
+        $request = DeleteAccountRequest::find($id);
+
+        if (!$request) {
+            abort(404, trans('update.delete_account_request_not_found'));
+        }
 
         $user = User::where('id', $request->user_id)->first();
 
         if (!empty($user)) {
             $user->delete();
 
-            Storage::disk('public')->deleteDirectory($user->id);
+            try {
+                Storage::disk('public')->deleteDirectory($user->id);
+            } catch (\Exception $e) {
+                // Directory may not exist, continue
+            }
 
+            $request->delete();
+        } else {
             $request->delete();
         }
 
@@ -70,6 +80,7 @@ class DeleteAccountRequestsController extends Controller
             'msg' => trans('update.user_account_successful_deleted'),
             'status' => 'success'
         ];
-        return back()->with(['toast' => $toastData]);
+
+        return redirect(getAdminPanelUrl('/users/delete-account-requests'))->with(['toast' => $toastData]);
     }
 }

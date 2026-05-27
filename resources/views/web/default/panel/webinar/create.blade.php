@@ -63,6 +63,26 @@
         var editChapterLang = '{{ trans('public.edit_chapter') }}';
     </script>
 
+    @if($errors->has('title'))
+    <script>
+        (function () {
+            "use strict";
+            document.addEventListener('DOMContentLoaded', function () {
+                Swal.fire({
+                    icon: 'error',
+                    title: '{{ trans('public.request_failed') }}',
+                    html: '<p class="font-16 text-center py-10">{{ $errors->first('title') }}</p>',
+                    confirmButtonText: '{{ trans('public.close') }}',
+                    customClass: {
+                        confirmButton: 'btn btn-primary'
+                    },
+                    width: '30rem',
+                });
+            });
+        })();
+    </script>
+    @endif
+
     <script src="/assets/default/js/panel/webinar.min.js"></script>
     <script src="/assets/default/js/panel/webinar_content_locale.min.js"></script>
 @endpush
