@@ -237,9 +237,9 @@
                             @endcan
                         </div>
 
-                        <div class="card-body">
-                            <div class="">
-                                <table class="table table-striped font-14 ">
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-striped font-14 mb-0">
                                     <tr>
                                         <th>{{trans('admin/main.id')}}</th>
                                         <th class="text-left">{{trans('admin/main.title')}}</th>
@@ -257,13 +257,13 @@
                                             <th>{{trans('admin/main.updated_at')}}</th>
                                         @endif
                                         <th>{{trans('admin/main.status')}}</th>
-                                        <th width="120">{{trans('admin/main.actions')}}</th>
+                                        <th>{{trans('admin/main.actions')}}</th>
                                     </tr>
 
                                     @foreach($webinars as $webinar)
                                         <tr class="text-center">
                                             <td>{{ $webinar->id }}</td>
-                                            <td width="18%" class="text-left">
+                                            <td class="text-left">
                                                 <a class="text-primary mt-0 mb-1 font-weight-bold" href="{{ $webinar->getUrl() }}">{{ $webinar->title }}</a>
                                                 <!-- Anjali  23-3-26 @if(!empty($webinar->category->title))
                                                     <div class="text-small">{{ $webinar->category->title }}</div>
@@ -347,7 +347,7 @@
                                                         @break
                                                 @endswitch
                                             </td>
-                                            <td width="200" class="">
+                                            <td>
                                                 <div class="btn-group dropdown table-actions">
                                                     <button type="button" class="btn-transparent dropdown-toggle" data-toggle="dropdown">
                                                         <i class="fa fa-ellipsis-v"></i>
