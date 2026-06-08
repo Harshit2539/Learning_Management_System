@@ -7,6 +7,7 @@ use App\Exports\InstructorsExport;
 use App\Exports\OrganizationsExport;
 use App\Exports\StudentsExport;
 use App\Exports\UsersExport;
+use App\Jobs\SendCourseAssignedMailJob;
 use App\Imports\StudentsImport;
 use App\Mail\CourseAssigned;
 use App\Mail\WelcomeUser;
@@ -1393,29 +1394,53 @@ class UserController extends Controller
             'student_ids.*' => 'exists:users,id',
         ]);
 
-        $webinar = Webinar::findOrFail($request->webinar_id);
-        $assigned = 0;
-        $skipped  = 0;
+        $webinar    = Webinar::findOrFail($request->webinar_id);
+        $studentIds = $request->student_ids;
+        $now        = now();
+        $assigned   = 0;
+        $skipped    = 0;
 
-        // Fetch the assignment template for this course once (to clone per student)
+        // 1. Load all requested students in 1 query
+        $users = User::whereIn('id', $studentIds)->get()->keyBy('id');
+
+        // 2. Load already enrolled students in 1 query
+        $alreadyEnrolled = Sale::where('webinar_id', $webinar->id)
+            ->whereNull('refund_at')
+            ->where('access_to_purchased_item', true)
+            ->whereIn('buyer_id', $studentIds)
+            ->pluck('buyer_id')
+            ->flip()
+            ->toArray();
+
+        // 3. Load assignment template once
         $assignmentTemplate = DB::table('assignments')
             ->where('course_id', $webinar->id)
             ->orderBy('id', 'asc')
             ->first();
 
-        foreach ($request->student_ids as $studentId) {
-            $user = User::find($studentId);
-            if (empty($user)) { $skipped++; continue; }
+        // 4. Load existing assignment user_ids in 1 query
+        $existingAssignments = !empty($assignmentTemplate)
+            ? DB::table('assignments')
+                ->where('course_id', $webinar->id)
+                ->whereIn('user_id', $studentIds)
+                ->pluck('user_id')
+                ->flip()
+                ->toArray()
+            : [];
 
-            $alreadyBought = Sale::where('buyer_id', $studentId)
-                ->where('webinar_id', $webinar->id)
-                ->whereNull('refund_at')
-                ->where('access_to_purchased_item', true)
-                ->exists();
+        $salesInsert       = [];
+        $assignmentsInsert = [];
+        $usersToMail       = [];
 
-            if ($alreadyBought || $webinar->isOwner($studentId)) { $skipped++; continue; }
+        foreach ($studentIds as $studentId) {
+            $user = $users->get($studentId);
 
-            Sale::create([
+            if (!$user || isset($alreadyEnrolled[$studentId]) || $webinar->isOwner($studentId)) {
+                $skipped++;
+                continue;
+            }
+
+            $salesInsert[] = [
                 'buyer_id'                 => $studentId,
                 'seller_id'                => $webinar->creator_id,
                 'webinar_id'               => $webinar->id,
@@ -1426,57 +1451,39 @@ class UserController extends Controller
                 'total_amount'             => 0,
                 'access_to_purchased_item' => true,
                 'created_at'               => time(),
-            ]);
+            ];
 
-            // Assign the template row to this student.
-            // If the template row has NULL user_id, update it in-place (no extra row).
-            // Otherwise clone it — but only if this student doesn't already have a row.
-            if (!empty($assignmentTemplate)) {
-                $alreadyHasAssignment = DB::table('assignments')
-                    ->where('course_id', $webinar->id)
-                    ->where('user_id', $studentId)
-                    ->exists();
+            if (!empty($assignmentTemplate) && !isset($existingAssignments[$studentId])) {
+                $newRow                = (array) $assignmentTemplate;
+                unset($newRow['id']);
+                $newRow['user_id']     = $studentId;
+                $newRow['pdf_review']  = null;
+                $newRow['admin_marks'] = null;
+                $newRow['created_at']  = $now;
+                $newRow['updated_at']  = $now;
+                $assignmentsInsert[]   = $newRow;
+            }
 
-                if (!$alreadyHasAssignment) {
-                    if (empty($assignmentTemplate->user_id)) {
-                        // Template row has no user yet — claim it for this student
-                        DB::table('assignments')
-                            ->where('id', $assignmentTemplate->id)
-                            ->update([
-                                'user_id'    => $studentId,
-                                'updated_at' => now(),
-                            ]);
-                        // Refresh template so next student gets a fresh clone
-                        $assignmentTemplate = DB::table('assignments')
-                            ->where('id', $assignmentTemplate->id)
-                            ->first();
-                    } else {
-                        // Template already owned — insert a clean clone for this student
-                        $newRow = (array) $assignmentTemplate;
-                        unset($newRow['id']);
-                        $newRow['user_id']    = $studentId;
-                        $newRow['pdf_review'] = null;
-                        $newRow['admin_marks'] = null;
-                        $newRow['created_at'] = now();
-                        $newRow['updated_at'] = now();
-                        DB::table('assignments')->insert($newRow);
-                    }
-                }
+            if (!empty($user->email)) {
+                $usersToMail[] = $user;
             }
 
             $assigned++;
+        }
 
-            if (!empty($user->email)) {
-                try {
-                    Mail::to($user->email)->send(new CourseAssigned(
-                        $user->full_name,
-                        $webinar->title,
-                        $webinar->slug
-                    ));
-                } catch (\Exception $e) {
-                    // mail failure should not block the assignment
-                }
-            }
+        // 5. Bulk insert sales in 1 query
+        if (!empty($salesInsert)) {
+            DB::table('sales')->insert($salesInsert);
+        }
+
+        // 6. Bulk insert assignments in 1 query
+        if (!empty($assignmentsInsert)) {
+            DB::table('assignments')->insert($assignmentsInsert);
+        }
+
+        // 7. Dispatch mail jobs to queue — non-blocking
+        foreach ($usersToMail as $user) {
+            SendCourseAssignedMailJob::dispatch($user->full_name, $user->email, $webinar->title ?? '', $webinar->slug ?? '');
         }
 
         $toastData = [

@@ -375,7 +375,7 @@
                         <span>&times;</span>
                     </button>
                 </div>
-                <form action="{{ getAdminPanelUrl() }}/students/import" method="POST" enctype="multipart/form-data">
+                <form action="{{ getAdminPanelUrl() }}/students/import" method="POST" enctype="multipart/form-data" id="importStudentsForm">
                     @csrf
                     <div class="modal-body">
                         @if(session('import_errors') && count(session('import_errors')))
@@ -405,13 +405,31 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-success">Import</button>
+                        <button type="submit" id="importSubmitBtn" class="btn btn-success">
+                            <span id="importBtnText"><i class="fas fa-file-import"></i> Import</span>
+                            <span id="importBtnLoader" style="display:none">
+                                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                Importing...
+                            </span>
+                        </button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
     @endcan
+    <script>
+        document.getElementById('importStudentsForm').addEventListener('submit', function () {
+            var btn = document.getElementById('importSubmitBtn');
+            var text = document.getElementById('importBtnText');
+            var loader = document.getElementById('importBtnLoader');
+            btn.disabled = true;
+            text.style.display = 'none';
+            loader.style.display = 'inline-flex';
+            loader.style.alignItems = 'center';
+            loader.style.gap = '6px';
+        });
+    </script>
     @can('admin_users_edit')
     <script>
         document.addEventListener('DOMContentLoaded', function () {
