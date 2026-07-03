@@ -16,6 +16,42 @@ use PhpOffice\PhpSpreadsheet\Calculation\Web;
 
 trait DashboardTrait
 {
+    private function orgUserIds()
+    {
+        if (app()->has('currentOrganization')) {
+            return \App\User::where('organization_id', app('currentOrganization')->id)->pluck('id');
+        }
+        return null;
+    }
+
+    private function scopeSaleQuery($query)
+    {
+        $ids = $this->orgUserIds();
+        if ($ids) {
+            $query->where(function ($q) use ($ids) {
+                $q->whereIn('buyer_id', $ids)->orWhereIn('seller_id', $ids);
+            });
+        }
+        return $query;
+    }
+
+    private function scopeWebinarQuery($query)
+    {
+        $ids = $this->orgUserIds();
+        if ($ids) {
+            $query->whereIn('creator_id', $ids);
+        }
+        return $query;
+    }
+
+    private function scopeUserQuery($query)
+    {
+        $ids = $this->orgUserIds();
+        if ($ids) {
+            $query->whereIn('id', $ids);
+        }
+        return $query;
+    }
     public function dailySalesTypeStatistics()
     {
         $this->authorize('admin_general_dashboard_daily_sales_statistics');
@@ -23,29 +59,27 @@ trait DashboardTrait
         $beginOfDay = strtotime("today", time());
         $endOfDay = strtotime("tomorrow", $beginOfDay) - 1;
 
-        $webinarsSales = Sale::whereNull('refund_at')
+        $webinarsSales = $this->scopeSaleQuery(Sale::whereNull('refund_at')
             ->where('type', Sale::$webinar)
             ->whereBetween('created_at', [$beginOfDay, $endOfDay])
             ->whereHas('webinar', function ($query) {
                 $query->where('type', Webinar::$webinar);
-            })->count();
+            }))->count();
 
-        $courseSales = Sale::whereNull('refund_at')
+        $courseSales = $this->scopeSaleQuery(Sale::whereNull('refund_at')
             ->where('type', Sale::$webinar)
             ->whereBetween('created_at', [$beginOfDay, $endOfDay])
             ->whereHas('webinar', function ($query) {
                 $query->where('type', Webinar::$course);
-            })->count();
+            }))->count();
 
-        $appointmentSales = Sale::whereNull('refund_at')
+        $appointmentSales = $this->scopeSaleQuery(Sale::whereNull('refund_at')
             ->where('type', Sale::$meeting)
-            ->whereBetween('created_at', [$beginOfDay, $endOfDay])
-            ->count();
+            ->whereBetween('created_at', [$beginOfDay, $endOfDay]))->count();
 
-        $allSales = Sale::whereNull('refund_at')
+        $allSales = $this->scopeSaleQuery(Sale::whereNull('refund_at')
             ->whereIn('type', [Sale::$webinar, Sale::$meeting])
-            ->whereBetween('created_at', [$beginOfDay, $endOfDay])
-            ->count();
+            ->whereBetween('created_at', [$beginOfDay, $endOfDay]))->count();
 
 
         return [
@@ -157,19 +191,16 @@ trait DashboardTrait
         $beginOfYear = $dateStartAndEnd['year']['start'];
         $endOfYear = $dateStartAndEnd['year']['end'];
 
-        $totalSales = Sale::whereNull('refund_at')->count();
+        $totalSales = $this->scopeSaleQuery(Sale::whereNull('refund_at'))->count();
 
-        $todaySales = Sale::whereNull('refund_at')
-            ->whereBetween('created_at', [$beginOfDay, $endOfDay])
-            ->count();
+        $todaySales = $this->scopeSaleQuery(Sale::whereNull('refund_at')
+            ->whereBetween('created_at', [$beginOfDay, $endOfDay]))->count();
 
-        $monthSales = Sale::whereNull('refund_at')
-            ->whereBetween('created_at', [$beginOfMonth, $endOfMonth])
-            ->count();
+        $monthSales = $this->scopeSaleQuery(Sale::whereNull('refund_at')
+            ->whereBetween('created_at', [$beginOfMonth, $endOfMonth]))->count();
 
-        $yearSales = Sale::whereNull('refund_at')
-            ->whereBetween('created_at', [$beginOfYear, $endOfYear])
-            ->count();
+        $yearSales = $this->scopeSaleQuery(Sale::whereNull('refund_at')
+            ->whereBetween('created_at', [$beginOfYear, $endOfYear]))->count();
 
         return [
             'totalSales' => $totalSales,
@@ -183,9 +214,8 @@ trait DashboardTrait
     {
         $this->authorize('admin_general_dashboard_new_sales');
 
-        return Sale::whereNull('refund_at')
-            ->whereDoesntHave('saleLog')
-            ->count();
+        return $this->scopeSaleQuery(Sale::whereNull('refund_at')
+            ->whereDoesntHave('saleLog'))->count();
     }
 
     public function getNewCommentsCount()
@@ -214,8 +244,7 @@ trait DashboardTrait
     {
         $this->authorize('admin_general_dashboard_new_reviews');
 
-        return Webinar::where('status', 'pending')
-            ->count();
+        return $this->scopeWebinarQuery(Webinar::where('status', 'pending'))->count();
     }
 
     public function getMonthAndYearSalesChart($type = 'month_of_year')
@@ -231,9 +260,8 @@ trait DashboardTrait
 
                 $labels[] = str_pad($day, 2, 0, STR_PAD_LEFT);
 
-                $amount = Sale::whereNull('refund_at')
-                    ->whereBetween('created_at', [$startDay, $endDay])
-                    ->sum('total_amount');
+                $amount = $this->scopeSaleQuery(Sale::whereNull('refund_at')
+                    ->whereBetween('created_at', [$startDay, $endDay]))->sum('total_amount');
                 $data[] = round($amount, 2);
             }
 
@@ -246,9 +274,8 @@ trait DashboardTrait
 
                 $labels[] = trans('panel.month_' . $month);
 
-                $amount = Sale::whereNull('refund_at')
-                    ->whereBetween('created_at', [$start_date, $end_date])
-                    ->sum('total_amount');
+                $amount = $this->scopeSaleQuery(Sale::whereNull('refund_at')
+                    ->whereBetween('created_at', [$start_date, $end_date]))->sum('total_amount');
 
                 $data[] = round($amount, 2);
             }
@@ -290,37 +317,29 @@ trait DashboardTrait
         $lastYearEnd = $endOfYear - 365 * 24 * 60 * 60;
 
 
-        $todaySales = Sale::whereNull('refund_at')
-            ->whereBetween('created_at', [$beginOfDay, $endOfDay])
-            ->sum('total_amount');
+        $todaySales = $this->scopeSaleQuery(Sale::whereNull('refund_at')
+            ->whereBetween('created_at', [$beginOfDay, $endOfDay]))->sum('total_amount');
 
-        $lastDaySales = Sale::whereNull('refund_at')
-            ->whereBetween('created_at', [$lastDayStart, $lastDayEnd])
-            ->sum('total_amount');
+        $lastDaySales = $this->scopeSaleQuery(Sale::whereNull('refund_at')
+            ->whereBetween('created_at', [$lastDayStart, $lastDayEnd]))->sum('total_amount');
 
-        $weekSales = Sale::whereNull('refund_at')
-            ->whereBetween('created_at', [$beginOfWeek, $endOfWeek])
-            ->sum('total_amount');
+        $weekSales = $this->scopeSaleQuery(Sale::whereNull('refund_at')
+            ->whereBetween('created_at', [$beginOfWeek, $endOfWeek]))->sum('total_amount');
 
-        $lastWeekSales = Sale::whereNull('refund_at')
-            ->whereBetween('created_at', [$lastWeekStart, $lastWeekEnd])
-            ->sum('total_amount');
+        $lastWeekSales = $this->scopeSaleQuery(Sale::whereNull('refund_at')
+            ->whereBetween('created_at', [$lastWeekStart, $lastWeekEnd]))->sum('total_amount');
 
-        $monthSales = Sale::whereNull('refund_at')
-            ->whereBetween('created_at', [$beginOfMonth, $endOfMonth])
-            ->sum('total_amount');
+        $monthSales = $this->scopeSaleQuery(Sale::whereNull('refund_at')
+            ->whereBetween('created_at', [$beginOfMonth, $endOfMonth]))->sum('total_amount');
 
-        $lastMonthSales = Sale::whereNull('refund_at')
-            ->whereBetween('created_at', [$lastMonthStart, $lastMonthEnd])
-            ->sum('total_amount');
+        $lastMonthSales = $this->scopeSaleQuery(Sale::whereNull('refund_at')
+            ->whereBetween('created_at', [$lastMonthStart, $lastMonthEnd]))->sum('total_amount');
 
-        $yearSales = Sale::whereNull('refund_at')
-            ->whereBetween('created_at', [$beginOfYear, $endOfYear])
-            ->sum('total_amount');
+        $yearSales = $this->scopeSaleQuery(Sale::whereNull('refund_at')
+            ->whereBetween('created_at', [$beginOfYear, $endOfYear]))->sum('total_amount');
 
-        $lastYearSales = Sale::whereNull('refund_at')
-            ->whereBetween('created_at', [$lastYearStart, $lastYearEnd])
-            ->sum('total_amount');
+        $lastYearSales = $this->scopeSaleQuery(Sale::whereNull('refund_at')
+            ->whereBetween('created_at', [$lastYearStart, $lastYearEnd]))->sum('total_amount');
 
         return [
             'todaySales' => [
@@ -394,14 +413,13 @@ trait DashboardTrait
         $this->authorize('admin_general_dashboard_recent_webinars');
 
 
-        $webinars = Webinar::where('type', Webinar::$webinar)
+        $webinars = $this->scopeWebinarQuery(Webinar::where('type', Webinar::$webinar))
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
 
-        $pendingReviews = Webinar::where('type', Webinar::$webinar)
-            ->where('status', 'pending')
-            ->count();
+        $pendingReviews = $this->scopeWebinarQuery(Webinar::where('type', Webinar::$webinar)
+            ->where('status', 'pending'))->count();
 
         return [
             'webinars' => $webinars,
@@ -414,14 +432,13 @@ trait DashboardTrait
         $this->authorize('admin_general_dashboard_recent_courses');
 
 
-        $courses = Webinar::where('type', Webinar::$course)
+        $courses = $this->scopeWebinarQuery(Webinar::where('type', Webinar::$course))
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
 
-        $pendingReviews = Webinar::where('type', Webinar::$course)
-            ->where('status', 'pending')
-            ->count();
+        $pendingReviews = $this->scopeWebinarQuery(Webinar::where('type', Webinar::$course)
+            ->where('status', 'pending'))->count();
 
         return [
             'courses' => $courses,
@@ -440,7 +457,7 @@ trait DashboardTrait
 
             $labels[] = str_pad($day, 2, 0, STR_PAD_LEFT);
 
-            $data[] = User::whereBetween('created_at', [$startDay, $endDay])
+            $data[] = $this->scopeUserQuery(User::whereBetween('created_at', [$startDay, $endDay]))
                 ->count();
         }
 
@@ -455,7 +472,7 @@ trait DashboardTrait
         $labels = [Webinar::$webinar, Webinar::$course, Webinar::$textLesson];
         $data = [];
 
-        $query = Webinar::where('status', Webinar::$active);
+        $query = $this->scopeWebinarQuery(Webinar::where('status', Webinar::$active));
         $allClasses = $query->count();
 
         foreach ($labels as $label) {
@@ -595,7 +612,7 @@ trait DashboardTrait
 
     public function getTopSellingClasses()
     {
-        return Webinar::where('status', Webinar::$active)
+        return $this->scopeWebinarQuery(Webinar::where('status', Webinar::$active)
             ->join('sales', 'webinars.id', '=', 'sales.webinar_id')
             ->select('webinars.*', 'sales.webinar_id',
                 DB::raw('count(sales.webinar_id) as sales_count'),
@@ -604,7 +621,7 @@ trait DashboardTrait
             ->where('sales.amount', '>', '0')
             ->groupBy('sales.webinar_id')
             ->orderBy('sales_count', 'desc')
-            ->limit(5)
+            ->limit(5))
             ->get();
     }
 
@@ -625,7 +642,7 @@ trait DashboardTrait
 
     public function getTopSellingTeachersAndOrganizations($role = 'teachers')
     {
-        $users = User::where('status', 'active')
+        $users = $this->scopeUserQuery(User::where('status', 'active')
             ->join('sales', 'users.id', '=', 'sales.seller_id')
             ->select('users.*', 'sales.seller_id',
                 DB::raw('count(sales.seller_id) as sales_count'),
@@ -635,7 +652,7 @@ trait DashboardTrait
             ->where('users.role_name', (($role == 'teachers') ? Role::$teacher : Role::$organization))
             ->groupBy('sales.seller_id')
             ->orderBy('sales_count', 'desc')
-            ->limit(5)
+            ->limit(5))
             ->get();
 
         foreach ($users as $user) {
@@ -653,7 +670,7 @@ trait DashboardTrait
 
     public function getMostActiveStudents()
     {
-        return User::where('status', 'active')
+        return $this->scopeUserQuery(User::where('status', 'active')
             ->join('sales', 'users.id', '=', 'sales.buyer_id')
             ->select('users.*', 'sales.buyer_id',
                 DB::raw('count(sales.webinar_id) as purchased_classes'),
@@ -665,7 +682,7 @@ trait DashboardTrait
             ->groupBy('sales.buyer_id')
             ->orderBy('purchased_classes', 'desc')
             ->orderBy('reserved_appointments', 'desc')
-            ->limit(5)
+            ->limit(5))
             ->get();
     }
 }

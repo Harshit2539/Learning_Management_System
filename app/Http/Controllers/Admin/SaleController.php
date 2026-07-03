@@ -22,6 +22,15 @@ class SaleController extends Controller
 
         $query = Sale::whereNull('product_order_id');
 
+        if (app()->has('currentOrganization')) {
+            $orgId = app('currentOrganization')->id;
+            $orgUserIds = \App\User::where('organization_id', $orgId)->pluck('id');
+            $query->where(function ($q) use ($orgUserIds) {
+                $q->whereIn('buyer_id', $orgUserIds)
+                  ->orWhereIn('seller_id', $orgUserIds);
+            });
+        }
+
         $totalSales = [
             'count' => deepClone($query)->count(),
             'amount' => deepClone($query)->sum('total_amount'),

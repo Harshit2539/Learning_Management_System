@@ -29,6 +29,8 @@ class WelcomeUser extends Mailable
                 !empty($generalSettings['site_email']) ? $generalSettings['site_email'] : env('MAIL_FROM_ADDRESS'),
                 env('MAIL_FROM_NAME')
             )
-            ->view('web.default.emails.welcome_user');
+            ->view('web.default.emails.welcome_user', [
+                'generalSettings' => $generalSettings,
+            ]);
     }
 }

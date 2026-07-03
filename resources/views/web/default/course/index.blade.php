@@ -211,7 +211,7 @@
                                 <a href="{{ asset($custompdfpreviewattched->file) }}"
                                    download
                                    class="btn btn-outline-primary btn-sm px-3">
-                                    <i class="fas fa-download mr-1"></i> Download PDF
+                                    <i class="fas fa-download mr-1"></i> Download Assignment PDF
                                 </a>
                             </div>
                         @endif
@@ -222,34 +222,38 @@
                         @if(!empty($custompdfpreviewattched->admin_marks))
 
                             @if(!empty($custompdfpreviewattched->pdf_review))
-                                <div class="mb-2">
-                                    <a href="{{ asset($custompdfpreviewattched->pdf_review) }}"
-                                       download
-                                       class="btn btn-sm px-3 text-white"
-                                       style="background-color:#3ba043; border:none;">
-                                        <i class="fas fa-file-pdf mr-1"></i> Download Submitted Assignment
-                                    </a>
-                                </div>
+                                <span class="text-muted font-weight-bold">
+                                    <i class="fas fa-check-circle mr-1"></i> Assessment has been successfully submitted.
+                                </span>
                             @else
                                 <span class="text-muted">Reviewed PDF not available</span>
                             @endif
 
                         @else
 
+                            {{-- Already submitted --}}
+                            @if(!empty($custompdfpreviewattched->pdf_review))
+
+                                <div class="mb-2">
+                                    <input type="file" name="assignment_pdf" class="form-control" accept="application/pdf" disabled>
+                                </div>
+                                <button type="button" class="btn px-3 text-white" style="background-color:#6c757d; border:none;" disabled>
+                                    <i class="fas fa-upload mr-1"></i> Upload Assignment PDF
+                                </button>
+                                <div class="mt-2 text-muted font-weight-bold">
+                                    <i class="fas fa-check-circle mr-1"></i> Assessment has been successfully submitted.
+                                </div>
+
                             {{-- If expired, disable upload --}}
-                            @if(!$isExpired)
+                            @elseif(!$isExpired)
 
                                 <div class="mb-2">
                                     <input type="file" name="assignment_pdf" class="form-control" accept="application/pdf" required>
                                 </div>
 
                                 <button type="submit" class="btn px-3 text-white" style="background-color:#1f3c88; border:none;">
-                                    <i class="fas fa-upload mr-1"></i> Upload
+                                    <i class="fas fa-upload mr-1"></i> Upload Assignment PDF
                                 </button>
-
-                                <small class="text-muted d-block mt-1">
-                                    Upload or replace assignment PDF.
-                                </small>
 
                             @else
 
@@ -438,12 +442,12 @@
 
                         </form>
 
-                        @if(!empty(getOthersPersonalizationSettings('show_guarantee_text')) and getOthersPersonalizationSettings('show_guarantee_text'))
+                        {{-- @if(!empty(getOthersPersonalizationSettings('show_guarantee_text')) and getOthersPersonalizationSettings('show_guarantee_text'))
                             <div class="mt-20 d-flex align-items-center justify-content-center text-gray">
                                 <i data-feather="thumbs-up" width="20" height="20"></i>
                                 <span class="ml-5 font-14">{{ trans('product.guarantee_text') }}</span>
                             </div>
-                        @endif
+                        @endif --}}
 
                         <div class="mt-35">
                             <strong class="d-block text-secondary font-weight-bold">{{ trans('webinars.this_webinar_includes',['classes' => trans('webinars.'.$course->type)]) }}</strong>

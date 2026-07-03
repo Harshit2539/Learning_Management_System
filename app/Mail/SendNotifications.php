@@ -2,10 +2,11 @@
 
 namespace App\Mail;
 
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class SendNotifications extends Mailable
+class SendNotifications extends Mailable implements ShouldQueue
 {
     use SerializesModels;
 

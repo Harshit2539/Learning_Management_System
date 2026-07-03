@@ -44,6 +44,12 @@ public function submitCustomAssignmentPreview(Request $request)
 
     $assignmentId = $request->assignment_id;
 
+    // Prevent re-upload if already submitted
+    $existing = DB::table('assignments')->where('id', $assignmentId)->first();
+    if (!empty($existing->pdf_review)) {
+        return redirect()->back()->with('error', 'Assessment has already been submitted.');
+    }
+
     if ($request->hasFile('assignment_pdf')) {
 
         $file = $request->file('assignment_pdf');
@@ -74,7 +80,7 @@ public function submitCustomAssignmentPreview(Request $request)
                 
             ]);
 
-        return redirect()->back()->with('success', 'PDF uploaded successfully!');
+        return redirect()->back()->with('success', 'Assessment has been successfully submitted.');
     }
 
     return redirect()->back()->with('error', 'No file selected.');

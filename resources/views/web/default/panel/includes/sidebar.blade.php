@@ -143,7 +143,7 @@
  
     <li class="sidenav-item {{ (request()->is('panel/assignments') or request()->is('panel/assignments/*')) ? 'sidenav-item-active' : '' }}">
         
-        <a class="d-flex align-items-center" data-toggle="collapse" href="#assignmentCollapse">
+        <a class="d-flex align-items-center" data-toggle="collapse" href="#teacherAssignmentCollapse">
  
             <span class="sidenav-item-icon mr-10">
                 @include('web.default.panel.includes.sidebar_icons.assignments')
@@ -152,7 +152,7 @@
             <span class="font-14 text-dark-blue font-weight-500">Assignments</span>
         </a>
  
-        <div class="collapse {{ (request()->is('panel/assignments') or request()->is('panel/assignments/*')) ? 'show' : '' }}" id="assignmentCollapse">
+        <div class="collapse {{ (request()->is('panel/assignments') or request()->is('panel/assignments/*')) ? 'show' : '' }}" id="teacherAssignmentCollapse">
             
             <ul class="sidenav-item-collapse">
  
@@ -211,7 +211,7 @@
 
                         @can('panel_webinars_my_purchases')
                             <li class="mt-5 {{ (request()->is('panel/webinars/purchases')) ? 'active' : '' }}">
-                                <a href="/panel/webinars/purchases">{{ trans('panel.my_purchases') }}</a>
+                                <a href="/panel/webinars/purchases">{{ 'My Enrollment' }}</a>
                             </li>
                         @endcan
 
@@ -542,7 +542,7 @@
             @endcan
         @endif
 
-        @can('panel_financial')
+        {{-- @can('panel_financial')
             <li class="sidenav-item {{ (request()->is('panel/financial') or request()->is('panel/financial/*')) ? 'sidenav-item-active' : '' }}">
                 <a class="d-flex align-items-center" data-toggle="collapse" href="#financialCollapse" role="button" aria-expanded="false" aria-controls="financialCollapse">
                 <span class="sidenav-item-icon mr-10">
@@ -606,7 +606,7 @@
                     </ul>
                 </div>
             </li>
-        @endcan
+        @endcan --}}
 
         @can('panel_support')
             <li class="sidenav-item {{ (request()->is('panel/support') or request()->is('panel/support/*')) ? 'sidenav-item-active' : '' }}">
@@ -644,7 +644,7 @@
         @endcan
 
 
-        @if(!$authUser->isUser() or (!empty($referralSettings) and $referralSettings['status'] and $authUser->affiliate) or (!empty(getRegistrationBonusSettings('status')) and $authUser->enable_registration_bonus))
+        {{-- @if(!$authUser->isUser() or (!empty($referralSettings) and $referralSettings['status'] and $authUser->affiliate) or (!empty(getRegistrationBonusSettings('status')) and $authUser->enable_registration_bonus))
             @can('panel_marketing')
                 <li class="sidenav-item {{ (request()->is('panel/marketing') or request()->is('panel/marketing/*')) ? 'sidenav-item-active' : '' }}">
                     <a class="d-flex align-items-center" data-toggle="collapse" href="#marketingCollapse" role="button" aria-expanded="false" aria-controls="marketingCollapse">
@@ -704,7 +704,7 @@
                     </div>
                 </li>
             @endcan
-        @endif
+        @endif --}}
 
 
         @if(getFeaturesSettings('forums_status'))
@@ -909,11 +909,11 @@
 
     </ul>
 
-    @if(!empty($getPanelSidebarSettings) and !empty($getPanelSidebarSettings['background']))
+    {{-- @if(!empty($getPanelSidebarSettings) and !empty($getPanelSidebarSettings['background']))
         <div class="sidebar-create-class d-none d-md-block">
             <a href="{{ !empty($getPanelSidebarSettings['link']) ? $getPanelSidebarSettings['link'] : '' }}" class="sidebar-create-class-btn d-block text-right p-5">
                 <img src="{{ !empty($getPanelSidebarSettings['background']) ? $getPanelSidebarSettings['background'] : '' }}" alt="">
             </a>
         </div>
-    @endif
+    @endif --}}
 </div>

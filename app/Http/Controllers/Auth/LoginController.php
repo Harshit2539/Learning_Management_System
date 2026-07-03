@@ -113,8 +113,10 @@ class LoginController extends Controller
     {
         $user = auth()->user();
 
-        $userLoginHistoryMixin = new UserLoginHistoryMixin();
-        $userLoginHistoryMixin->storeUserLogoutHistory($user->id);
+        if ($user) {
+            $userLoginHistoryMixin = new UserLoginHistoryMixin();
+            $userLoginHistoryMixin->storeUserLogoutHistory($user->id);
+        }
 
         $this->guard()->logout();
 

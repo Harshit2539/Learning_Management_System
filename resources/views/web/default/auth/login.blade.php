@@ -85,7 +85,16 @@
 
                     <div class="mt-20 text-center">
                         <span>{{ trans('auth.dont_have_account') }}</span>
-                        <a href="/register" class="text-secondary font-weight-bold">{{ trans('auth.signup') }}</a>
+                        {{-- <a href="/register" class="text-secondary font-weight-bold">{{ trans('auth.signup') }}</a> --}}
+                         <a href="/saas/pricing" class="text-secondary font-weight-bold">
+                            Sign Up
+                        </a>
+                    </div>
+
+                    <div class="mt-20 text-center">
+                        <a href="/superadmin/login" class="btn btn-primary btn-block mt-20" style="font-size:12px;">
+                            Super Admin Dashboard →
+                        </a>
                     </div>
                 </div>
             </div>

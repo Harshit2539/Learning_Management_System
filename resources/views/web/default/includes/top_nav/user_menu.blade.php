@@ -15,7 +15,7 @@
 
                 <div class="ml-5">
                     <div class="font-14 font-weight-bold text-secondary">{{ $authUser->full_name }}</div>
-                    <span class="mt-5 text-gray font-12">{{ $authUser->role->caption }}</span>
+                    <span class="mt-5 text-gray font-12">{{ $authUser->role?->caption ?? ucfirst(str_replace('_', ' ', $authUser->role_name)) }}</span>
                 </div>
             </div>
 
@@ -97,6 +97,7 @@
 @else
     <div class="d-flex align-items-center ml-md-50">
         <a href="/login" class="py-5 px-10 mr-10 text-dark-blue font-14">{{ trans('auth.login') }}</a>
-        <a href="/register" class="py-5 px-10 text-dark-blue font-14">{{ trans('auth.register') }}</a>
+        {{-- <a href="/register" class="py-5 px-10 text-dark-blue font-14">{{ trans('auth.register') }}</a> --}}
+        <a href="/saas/pricing" class="py-5 px-10 mr-10 text-dark-blue font-14">Register</a>
     </div>
 @endif

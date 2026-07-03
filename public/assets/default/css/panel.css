@@ -263,9 +263,9 @@ $custom-control-indicator-bg:$primary;*/
   pointer-events: none;
 }
 .panel-sidebar .sidebar-menu {
-  height: calc(100% - 405px);
+  height: calc(100% - 325px);
   overflow: auto;
-  padding-bottom: 35px;
+  padding-bottom: 15px;
 }
 .panel-sidebar .sidebar-menu.has-user-group {
   height: calc(100% - 455px);

@@ -14,7 +14,7 @@
                     <div class="d-flex flex-column align-items-center text-center">
                         <img src="/assets/default/img/activity/webinars.svg" width="64" height="64" alt="">
                         <strong class="font-30 text-dark-blue font-weight-bold mt-5">{{ $purchasedCount }}</strong>
-                        <span class="font-16 text-gray font-weight-500">{{ trans('panel.purchased') }}</span>
+                        <span class="font-16 text-gray font-weight-500">{{ 'Enrollments' }}</span>
                     </div>
                 </div>
 
@@ -40,7 +40,7 @@
 
     <section class="mt-25">
         <div class="d-flex align-items-start align-items-md-center justify-content-between flex-column flex-md-row">
-            <h2 class="section-title">{{ trans('panel.my_purchases') }}</h2>
+            <h2 class="section-title">{{ 'My Enrollments' }}</h2>
         </div>
 
         @if(!empty($sales) and !$sales->isEmpty())

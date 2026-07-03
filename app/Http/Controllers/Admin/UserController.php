@@ -76,6 +76,10 @@ class UserController extends Controller
 
         $query = User::where('role_name', Role::$organization);
 
+        if (app()->has('currentOrganization')) {
+            $query->where('organization_id', app('currentOrganization')->id);
+        }
+
         $totalOrganizations = deepClone($query)->count();
         $verifiedOrganizations = deepClone($query)->where('verified', true)
             ->count();
@@ -124,6 +128,10 @@ class UserController extends Controller
         $this->authorize('admin_users_list');
 
         $query = User::where('role_name', Role::$user);
+
+        if (app()->has('currentOrganization')) {
+            $query->where('organization_id', app('currentOrganization')->id);
+        }
 
         $totalStudents = deepClone($query)->count();
         $inactiveStudents = deepClone($query)->where('status', 'inactive')
@@ -181,6 +189,10 @@ class UserController extends Controller
         $this->authorize('admin_instructors_list');
 
         $query = User::where('role_name', Role::$teacher);
+
+        if (app()->has('currentOrganization')) {
+            $query->where('organization_id', app('currentOrganization')->id);
+        }
 
         $totalInstructors = deepClone($query)->count();
         $inactiveInstructors = deepClone($query)->where('status', 'inactive')
@@ -511,15 +523,16 @@ class UserController extends Controller
 
 
                 $user = User::create([
-                    'full_name' => $data['full_name'],
-                    'role_name' => $role->name,
-                    'role_id' => $data['role_id'],
-                    $username => $data[$username],
-                    'password' => User::generatePassword($data['password']),
-                    'status' => $data['status'],
-                    'affiliate' => $usersAffiliateStatus,
-                    'verified' => true,
-                    'created_at' => time(),
+                    'full_name'       => $data['full_name'],
+                    'role_name'       => $role->name,
+                    'role_id'         => $data['role_id'],
+                    $username         => $data[$username],
+                    'password'        => User::generatePassword($data['password']),
+                    'status'          => $data['status'],
+                    'affiliate'       => $usersAffiliateStatus,
+                    'verified'        => true,
+                    'organization_id' => app()->has('currentOrganization') ? app('currentOrganization')->id : null,
+                    'created_at'      => time(),
                 ]);
 
                 // Send welcome email with credentials

@@ -4,6 +4,9 @@ namespace App\Http;
 
 use App\Http\Middleware\AdminAuthenticate;
 use App\Http\Middleware\AdminLocale;
+use App\Http\Middleware\OrganizationMiddleware;
+use App\Http\Middleware\SubscriptionActiveMiddleware;
+use App\Http\Middleware\SuperAdminAuthenticate;
 use App\Http\Middleware\Api\CheckRestrictionAPI;
 use App\Http\Middleware\CheckMaintenance;
 use App\Http\Middleware\CheckMobileApp;
@@ -97,6 +100,10 @@ class Kernel extends HttpKernel
         'api.identify' => \App\Http\Middleware\Api\CheckApiKey::class,
         'api.level-access' => \App\Http\Middleware\Api\LevelAccess::class,
         'check_restriction_api' => CheckRestrictionAPI::class,
+        // SaaS
+        'organization'        => OrganizationMiddleware::class,
+        'subscription.active' => SubscriptionActiveMiddleware::class,
+        'super_admin'         => SuperAdminAuthenticate::class,
 
     ];
 }

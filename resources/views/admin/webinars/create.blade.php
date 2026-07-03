@@ -127,13 +127,17 @@
                                             <div class="form-group mt-15 ">
                                                 <label class="input-label d-block">{{ trans('admin/main.select_a_instructor') }}</label>
 
-                                                <select name="teacher_id" data-search-option="except_user" class="form-control search-user-select22"
-                                                        data-placeholder="{{ trans('public.select_a_teacher') }}"
-                                                >
-                                                    @if(!empty($webinar))
+                                                <select name="teacher_id" class="form-control select2 @error('teacher_id') is-invalid @enderror">
+                                                    <option value="" disabled {{ empty($webinar) ? 'selected' : '' }}>{{ trans('public.select_a_teacher') }}</option>
+                                                    @if(!empty($teachers))
+                                                        @foreach($teachers as $teacher)
+                                                            <option value="{{ $teacher->id }}"
+                                                                {{ (!empty($webinar) && $webinar->teacher_id == $teacher->id) ? 'selected' : '' }}>
+                                                                {{ $teacher->full_name }} ({{ $teacher->role_name }})
+                                                            </option>
+                                                        @endforeach
+                                                    @elseif(!empty($webinar))
                                                         <option value="{{ $webinar->teacher->id }}" selected>{{ $webinar->teacher->full_name }}</option>
-                                                    @else
-                                                        <option selected disabled>{{ trans('public.select_a_teacher') }}</option>
                                                     @endif
                                                 </select>
 

@@ -118,17 +118,23 @@
                 </ul>
             </div>
 
-            <div class="nav-icons-or-start-live navbar-order d-flex align-items-center justify-content-end">
+            {{-- <div class="nav-icons-or-start-live navbar-order d-flex align-items-center justify-content-end">
 
                 @if(!empty($navBtnUrl))
                     <a href="{{ $navBtnUrl }}" class="d-none d-lg-flex btn btn-sm btn-primary nav-start-a-live-btn">
                         {{ $navBtnText }}
                     </a>
-
                     <a href="{{ $navBtnUrl }}" class="d-flex d-lg-none text-primary nav-start-a-live-btn font-14">
-                        {{ $navBtnText }}
+                        {{ "$navBtnText" }}
                     </a>
                 @endif
+
+               // SaaS: For Organizations button (guests only) 
+                @guest
+                    <a href="/saas/pricing" class="d-none d-lg-flex btn btn-sm btn-outline-primary ml-10">
+                        Register Organization
+                    </a>
+                @endguest
 
                 @if(!empty($isPanel))
                     @if($authUser->checkAccessToAIContentFeature())
@@ -143,13 +149,11 @@
 
                 <div class="d-none nav-notify-cart-dropdown top-navbar">
                     @include('web.default.includes.shopping-cart-dropdwon')
-
                     <div class="border-left mx-15"></div>
-
                     @include('web.default.includes.notification-dropdown')
                 </div>
 
-            </div>
+            </div> --}}
         </div>
     </div>
 </nav>
