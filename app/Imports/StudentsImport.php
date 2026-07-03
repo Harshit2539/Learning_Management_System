@@ -22,6 +22,8 @@ class StudentsImport implements ToCollection, WithHeadingRow, WithChunkReading
 
     public function collection(Collection $rows)
     {
+        $orgId = app()->has('currentOrganization') ? app('currentOrganization')->id : null;
+
         $role = Role::where('name', Role::$user)->first();
 
         if (!$role) {
@@ -102,17 +104,18 @@ class StudentsImport implements ToCollection, WithHeadingRow, WithChunkReading
 
             // cost 4 for bulk import — fast on any server, user should reset password after first login
             $insertData[] = [
-                'full_name'  => $name,
-                'university' => $university ?: null,
-                'email'      => $email ?: null,
-                'mobile'     => $mobile ?: null,
-                'role_name'  => $role->name,
-                'role_id'    => $role->id,
-                'password'   => password_hash($password, PASSWORD_BCRYPT, ['cost' => 4]),
-                'status'     => $status,
-                'affiliate'  => $usersAffiliateStatus,
-                'verified'   => true,
-                'created_at' => $now,
+                'full_name'       => $name,
+                'university'      => $university ?: null,
+                'email'           => $email ?: null,
+                'mobile'          => $mobile ?: null,
+                'role_name'       => $role->name,
+                'role_id'         => $role->id,
+                'password'        => password_hash($password, PASSWORD_BCRYPT, ['cost' => 4]),
+                'status'          => $status,
+                'affiliate'       => $usersAffiliateStatus,
+                'verified'        => true,
+                'organization_id' => $orgId,
+                'created_at'      => $now,
             ];
 
             if (!empty($email)) {

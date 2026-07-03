@@ -52,6 +52,8 @@ class RouteServiceProvider extends ServiceProvider
 
         $this->mapPanelRoutes();
 
+        $this->mapSaasRoutes();
+
         //
     }
 
@@ -103,5 +105,12 @@ class RouteServiceProvider extends ServiceProvider
         Route::middleware('web')
             ->namespace($this->namespace)
             ->group(base_path('routes/panel.php'));
+    }
+
+    protected function mapSaasRoutes()
+    {
+        Route::middleware('web')
+            ->namespace($this->namespace)
+            ->group(base_path('routes/saas.php'));
     }
 }

@@ -96,7 +96,7 @@ class NewslettersController extends Controller
 
         try {
             foreach ($newsletters as $newsletter) {
-                \Mail::to($newsletter->email)->send(new SendNotifications(['title' => $title, 'message' => $description]));
+                \Mail::to($newsletter->email)->queue(new SendNotifications(['title' => $title, 'message' => $description]));
             }
 
             return count($newsletters);
@@ -125,7 +125,7 @@ class NewslettersController extends Controller
         $ccEmails = Newsletter::orderBy('created_at', 'desc')->pluck('email')->toArray();
 
         try {
-            \Mail::to($email)->send(new SendNotifications(['title' => $title, 'message' => $description, 'cc' => $ccEmails]));
+            \Mail::to($email)->queue(new SendNotifications(['title' => $title, 'message' => $description, 'cc' => $ccEmails]));
 
             return count($ccEmails);
         } catch (Exception $e) {
@@ -158,7 +158,7 @@ class NewslettersController extends Controller
                     if (!empty($row) and !empty($row[0])) {
                         $email = $row[0];
 
-                        \Mail::to($email)->send(new SendNotifications(['title' => $title, 'message' => $description]));
+                        \Mail::to($email)->queue(new SendNotifications(['title' => $title, 'message' => $description]));
                     }
                 }
             }

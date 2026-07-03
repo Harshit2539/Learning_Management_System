@@ -21,12 +21,12 @@
             @endif
         </div>
 
-        @if(!$authUser->financial_approval and !$authUser->isUser())
+        {{-- @if(!$authUser->financial_approval and !$authUser->isUser())
             <div class="p-15 mt-20 p-lg-20 not-verified-alert font-weight-500 text-dark-blue rounded-sm panel-shadow">
                 {{ trans('panel.not_verified_alert') }}
                 <a href="/panel/setting/step/7" class="text-decoration-underline">{{ trans('panel.this_link') }}</a>.
             </div>
-        @endif
+        @endif --}}
 
         <div class="bg-white dashboard-banner-container position-relative px-15 px-ld-35 py-10 panel-shadow rounded-sm">
             <h2 class="font-30 text-primary line-height-1">
@@ -56,7 +56,7 @@
 
     <section class="dashboard">
         <div class="row">
-            <div class="col-12 col-lg-3 mt-35">
+            {{-- <div class="col-12 col-lg-3 mt-35">
                 <div class="bg-white account-balance rounded-sm panel-shadow py-15 py-md-30 px-10 px-md-20">
                     <div class="text-center">
                         <img src="/assets/default/img/activity/36.svg" class="account-balance-icon" alt="">
@@ -80,16 +80,16 @@
                         @endif
                     </div>
                 </div>
-            </div>
+            </div> --}}
 
-            <div class="col-12 col-lg-3 mt-35">
+            <div class="col-12 col-lg-4 mt-35">
                 <a href="@if($authUser->isUser()) /panel/webinars/purchases @else /panel/meetings/requests @endif" class="dashboard-stats rounded-sm panel-shadow p-10 p-md-20 d-flex align-items-center">
                     <div class="stat-icon requests">
                         <img src="/assets/default/img/icons/request.svg" alt="">
                     </div>
                     <div class="d-flex flex-column ml-15">
                         <span class="font-30 text-secondary">{{ !empty($pendingAppointments) ? $pendingAppointments : (!empty($webinarsCount) ? $webinarsCount : 0) }}</span>
-                        <span class="font-16 text-gray font-weight-500">{{ $authUser->isUser() ? trans('panel.purchased_courses') : trans('panel.pending_appointments') }}</span>
+                        <span class="font-16 text-gray font-weight-500">{{ $authUser->isUser() ? 'Enrolled Courses' : trans('panel.pending_appointments') }}</span>
                     </div>
                 </a>
 
@@ -104,7 +104,7 @@
                 </a>
             </div>
 
-            <div class="col-12 col-lg-3 mt-35">
+            <div class="col-12 col-lg-4 mt-35">
                 <a href="/panel/support" class="dashboard-stats rounded-sm panel-shadow p-10 p-md-20 d-flex align-items-center">
                     <div class="stat-icon support-messages">
                         <img src="/assets/default/img/icons/support.svg" alt="">
@@ -126,7 +126,7 @@
                 </a>
             </div>
 
-            <div class="col-12 col-lg-3 mt-35">
+            <div class="col-12 col-lg-4 mt-35">
                 <div class="bg-white account-balance rounded-sm panel-shadow py-15 py-md-15 px-10 px-md-20">
                     <div data-percent="{{ !empty($nextBadge) ? $nextBadge['percent'] : 0 }}" data-label="{{ (!empty($nextBadge) and !empty($nextBadge['earned'])) ? $nextBadge['earned']->title : '' }}" id="nextBadgeChart" class="text-center">
                     </div>

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 use App\Mixins\Financial\MultiCurrency;
 use Illuminate\Support\Facades\Cookie;
@@ -717,7 +717,7 @@ function currencySign($currency = null)
             return '¥';
             break;
         case 'AED':
-            return 'د.إ';
+            return '<img src="' . asset('assets/Media.jpg') . '" style="width:20px;height:20px;border-radius:50%;vertical-align:middle;margin-bottom:5px;margin-right:2px;opacity:0.85;" alt="AED">';
             break;
         case 'SAR':
             return 'ر.س';
@@ -2547,6 +2547,10 @@ function addCurrencyToPrice($price, $userCurrencyItem = null)
 
             default:
                 $price = $currency . $price;
+        }
+
+        if (strip_tags($price) !== $price) {
+            $price = new \Illuminate\Support\HtmlString($price);
         }
     }
 

@@ -45,14 +45,17 @@ class WebinarController extends Controller
     use WebinarChangeCreator, ProductBadgeTrait, VideoDemoTrait;
 public function customAssignmentPreview()
 {
-    $assignments = DB::table('assignments')
+    $query = DB::table('assignments')
         ->join('users', 'assignments.user_id', '=', 'users.id')
-        ->select(
-            'assignments.*',
-            'users.full_name as user_name'
-        )
-        ->get();
-//   dd($assignments);
+        ->join('webinars', 'assignments.course_id', '=', 'webinars.id')
+        ->select('assignments.*', 'users.full_name as user_name');
+
+    if (app()->has('currentOrganization')) {
+        $orgUserIds = \App\User::where('organization_id', app('currentOrganization')->id)->pluck('id');
+        $query->whereIn('webinars.creator_id', $orgUserIds);
+    }
+
+    $assignments = $query->get();
     return view('admin.customeassigmentpreview.index', compact('assignments'));
 }
 public function submitMarks(Request $request)
@@ -105,6 +108,12 @@ public function submitMarks(Request $request)
 
         $type = $request->get('type', 'webinar');
         $query = Webinar::where('webinars.type', $type);
+
+        // Scope to current organization if org admin is logged in
+        if (app()->has('currentOrganization')) {
+            $orgUserIds = \App\User::where('organization_id', app('currentOrganization')->id)->pluck('id');
+            $query->whereIn('webinars.creator_id', $orgUserIds);
+        }
 
         $totalWebinars = $query->count();
         $totalPendingWebinars = deepClone($query)->where('webinars.status', 'pending')->count();
@@ -380,7 +389,13 @@ public function submitMarks(Request $request)
 
         removeContentLocale();
 
-        $teachers = User::where('role_name', Role::$teacher)->get();
+        $teacherQuery = User::whereIn('role_name', [Role::$teacher, Role::$admin]);
+
+        if (app()->has('currentOrganization')) {
+            $teacherQuery->where('organization_id', app('currentOrganization')->id);
+        }
+
+        $teachers = $teacherQuery->get();
         $categories = Category::where('parent_id', null)->get();
 
         $data = [
@@ -758,7 +773,6 @@ public function edit(Request $request, $id)
      $assignment = DB::table('assignments')
     ->where('course_id', $webinar->id)
     ->first();
-    // dd($assignment);
 
     // Get the selected categories/subcategories for this webinar
     $selectedCategoryIds = \DB::table('category_mapping')
@@ -766,11 +780,18 @@ public function edit(Request $request, $id)
         ->pluck('category_id')
         ->toArray();
 
+    $teacherQuery = User::whereIn('role_name', [Role::$teacher, Role::$admin]);
+    if (app()->has('currentOrganization')) {
+        $teacherQuery->where('organization_id', app('currentOrganization')->id);
+    }
+    $teachers = $teacherQuery->get();
+
     $data = [
         'pageTitle' => trans('admin/main.edit') . ' | ' . $webinar->title,
         'categories' => $categories,
         'webinar' => $webinar,
-        'selectedCategoryIds' => $selectedCategoryIds, // <-- pass this to the view
+        'teachers' => $teachers,
+        'selectedCategoryIds' => $selectedCategoryIds,
         'webinarCategoryFilters' => $webinar->category->filters ?? null,
         'webinarFilterOptions' => $webinar->filterOptions->pluck('filter_option_id')->toArray(),
         'tickets' => $webinar->tickets,

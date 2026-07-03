@@ -23,6 +23,17 @@ class AdminAuthenticate
     {
         if (auth()->check() and auth()->user()->isAdmin()) {
 
+            $authUser = auth()->user();
+
+            // Set current organization context for org admins (not super admin)
+            if (!empty($authUser->organization_id)) {
+                $org = \App\Models\SaasOrganization::find($authUser->organization_id);
+                if ($org) {
+                    app()->instance('currentOrganization', $org);
+                    view()->share('currentOrganization', $org);
+                }
+            }
+
             \Session::forget('impersonated');
 
             if (auth()->user()->hasPermission('admin_notifications_list')) {

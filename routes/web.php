@@ -35,6 +35,41 @@ Route::group(['prefix' => 'cookie-security'], function () {
     Route::post('/customize', 'Web\CookieSecurityController@setCustomize');
 });
 
+/* Test Email */
+Route::get('/testEmail/{to?}', function ($to = null) {
+    $to    = $to ?? env('MAIL_FROM_ADDRESS');
+    $host  = config('mail.mailers.smtp.host');
+    $port  = config('mail.mailers.smtp.port');
+    $enc   = config('mail.mailers.smtp.encryption');
+    $user  = config('mail.mailers.smtp.username');
+
+    $cfg = ['host' => $host, 'port' => $port, 'encryption' => $enc, 'username' => $user];
+
+    // 1. Raw socket test 
+    $sock = @fsockopen($host, $port, $errno, $errstr, 10);
+    if (!$sock) {
+        return response()->json(['status' => 'error', 'step' => 'socket_connect', 'message' => "Cannot connect to {$host}:{$port} - {$errstr} (errno {$errno})", 'config' => $cfg]);
+    }
+    fclose($sock);
+
+    // 2. SSL socket test
+    $sslSock = @stream_socket_client("ssl://{$host}:{$port}", $errno, $errstr, 10);
+    if (!$sslSock) {
+        return response()->json(['status' => 'error', 'step' => 'ssl_handshake', 'message' => "Socket OK but SSL handshake failed to {$host}:{$port} - {$errstr} (errno {$errno})", 'config' => $cfg]);
+    }
+    fclose($sslSock);
+
+    // 3. Laravel Mail send test
+    try {
+        \Mail::raw('Test email from LMS - SMTP working.', function ($m) use ($to) {
+            $m->to($to)->subject('LMS Mail Test - ' . now());
+        });
+        return response()->json(['status' => 'success', 'message' => 'Email sent to ' . $to, 'config' => $cfg]);
+    } catch (\Exception $e) {
+        return response()->json(['status' => 'error', 'step' => 'laravel_mail', 'message' => $e->getMessage(), 'config' => $cfg]);
+    }
+});
+
 /* Emergency Database Update */
 Route::get('/emergencyDatabaseUpdate', function () {
     \Illuminate\Support\Facades\Artisan::call('migrate', [
