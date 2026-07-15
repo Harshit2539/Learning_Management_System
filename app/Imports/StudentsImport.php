@@ -31,6 +31,15 @@ class StudentsImport implements ToCollection, WithHeadingRow, WithChunkReading
             return;
         }
 
+        // SaaS plan student limit check
+        $planStudentLimit = null;
+        if ($orgId && app()->has('currentOrganization')) {
+            $plan = app('currentOrganization')->getActivePlan();
+            if ($plan && $plan->max_students !== null) {
+                $planStudentLimit = $plan->max_students;
+            }
+        }
+
         $referralSettings = getReferralSettings();
         $usersAffiliateStatus = !empty($referralSettings['users_affiliate_status']);
 
@@ -41,6 +50,11 @@ class StudentsImport implements ToCollection, WithHeadingRow, WithChunkReading
         $insertData  = [];
         $mailQueue   = [];
         $now         = time();
+
+        // Current student count for this org (used for limit enforcement)
+        $currentStudentCount = $orgId
+            ? DB::table('users')->where('organization_id', $orgId)->where('role_name', Role::$user)->count()
+            : 0;
 
         foreach ($rows as $index => $row) {
             $rowNumber = $index + 2;
@@ -100,6 +114,12 @@ class StudentsImport implements ToCollection, WithHeadingRow, WithChunkReading
                     continue;
                 }
                 $existingMobiles[$mobile] = true;
+            }
+
+            // SaaS plan limit: check before adding this row
+            if ($planStudentLimit !== null && ($currentStudentCount + count($insertData)) >= $planStudentLimit) {
+                $this->errors[] = "Row {$rowNumber}: Student limit of {$planStudentLimit} reached for your plan. Remaining rows skipped. Please upgrade your plan to add more students.";
+                break;
             }
 
             // cost 4 for bulk import — fast on any server, user should reset password after first login

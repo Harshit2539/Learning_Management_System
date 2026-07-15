@@ -510,11 +510,12 @@
         }
 
     </style>
-      @if(!empty($generalSettings['site_name']))
+    @php $generalSettings = $generalSettings ?? []; @endphp
+    @if(!empty($generalSettings['site_name']))
     <title>{{ $generalSettings['site_name'] }}</title>
-   @else
-   <title>Platform Title</title>
-   @endif
+    @else
+    <title>Platform Title</title>
+    @endif
 </head>
 <body leftmargin="0" marginwidth="0" topmargin="0" marginheight="0" offset="0">
 <center>
@@ -529,7 +530,9 @@
                             <table border="0" cellpadding="0" cellspacing="0" width="100%" id="templatePreheader">
                                 <tr>
                                     <td class="headerContent" width="100%">
+                                        @if(!empty($generalSettings['logo']))
                                         <a href=""><img src="{{ url($generalSettings['logo']) }}" style="max-width:128px;margin-bottom: 8px;margin-top: 24px" id="headerImage campaign-icon" mc:label="header_image" mc:edit="header_image" mc:allowtext/></a>
+                                        @endif
                                     </td>
                                 </tr>
                             </table>

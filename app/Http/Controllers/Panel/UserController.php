@@ -21,6 +21,7 @@ use App\Models\UserOccupation;
 use App\Models\UserSelectedBank;
 use App\Models\UserSelectedBankSpecification;
 use App\Models\UserZoomApi;
+use App\Mixins\Saas\SaasPlanLimiter;
 use App\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -152,7 +153,7 @@ class UserController extends Controller
         if (!empty($data['organization_id']) and !empty($data['user_id'])) {
             $organization = auth()->user();
             $user = User::where('id', $data['user_id'])
-                ->where('organ_id', $organization->id)
+                ->where('organization_id', $organization->organization_id)
                 ->first();
         } else {
             $user = auth()->user();
@@ -454,7 +455,7 @@ class UserController extends Controller
             if (!empty($data['user_id'])) {
                 $organization = auth()->user();
                 $user = User::where('id', $data['user_id'])
-                    ->where('organ_id', $organization->id)
+                    ->where('organization_id', $organization->organization_id)
                     ->first();
             } else {
                 $user = auth()->user();
@@ -482,7 +483,7 @@ class UserController extends Controller
         if (!empty($data['user_id'])) {
             $checkUser = User::find($data['user_id']);
 
-            if ((!empty($checkUser) and ($data['user_id'] == $user->id) or $checkUser->organ_id == $user->id)) {
+            if ((!empty($checkUser) and ($data['user_id'] == $user->id) or $checkUser->organization_id == $user->organization_id)) {
                 $meta = UserMeta::where('id', $meta_id)
                     ->where('user_id', $data['user_id'])
                     ->where('name', $data['name'])
@@ -515,7 +516,7 @@ class UserController extends Controller
         if (!empty($data['user_id'])) {
             $checkUser = User::find($data['user_id']);
 
-            if (!empty($checkUser) and ($data['user_id'] == $user->id or $checkUser->organ_id == $user->id)) {
+            if (!empty($checkUser) and ($data['user_id'] == $user->id or $checkUser->organization_id == $user->organization_id)) {
                 $meta = UserMeta::where('id', $meta_id)
                     ->where('user_id', $data['user_id'])
                     ->first();
@@ -628,6 +629,19 @@ class UserController extends Controller
                 return redirect()->back();
             }
 
+            // SaaS plan limit check
+            $limiter = SaasPlanLimiter::forUser($organization);
+            if ($limiter) {
+                $limitError = $user_type === 'instructors'
+                    ? $limiter->checkInstructorLimit()
+                    : $limiter->checkStudentLimit();
+
+                if ($limitError) {
+                    $toastData = ['title' => trans('public.request_failed'), 'msg' => $limitError, 'status' => 'error'];
+                    return redirect()->back()->with(['toast' => $toastData]);
+                }
+            }
+
             $categories = Category::where('parent_id', null)
                 ->with('subCategories')
                 ->get();
@@ -664,6 +678,20 @@ class UserController extends Controller
         $organization = auth()->user();
 
         if ($organization->isOrganization() and in_array($user_type, $valid_type)) {
+
+            // SaaS plan limit check (double-check on store)
+            $limiter = SaasPlanLimiter::forUser($organization);
+            if ($limiter) {
+                $limitError = $user_type === 'instructors'
+                    ? $limiter->checkInstructorLimit()
+                    : $limiter->checkStudentLimit();
+
+                if ($limitError) {
+                    $toastData = ['title' => trans('public.request_failed'), 'msg' => $limitError, 'status' => 'error'];
+                    return redirect()->back()->with(['toast' => $toastData]);
+                }
+            }
+
             $this->validate($request, [
                 'email' => 'required|string|email|max:255|unique:users',
                 'full_name' => 'required|string',
@@ -683,6 +711,7 @@ class UserController extends Controller
                 'role_id' => $role_id,
                 'email' => $data['email'],
                 'organ_id' => $organization->id,
+                'organization_id' => $organization->organization_id,
                 'password' => Hash::make($data['password']),
                 'full_name' => $data['full_name'],
                 'mobile' => $data['mobile'],
@@ -719,7 +748,7 @@ class UserController extends Controller
 
         if ($organization->isOrganization() and in_array($user_type, $valid_type)) {
             $user = User::where('id', $user_id)
-                ->where('organ_id', $organization->id)
+                ->where('organization_id', $organization->organization_id)
                 ->first();
 
             if (!empty($user)) {
@@ -775,12 +804,13 @@ class UserController extends Controller
 
         if ($organization->isOrganization() and in_array($user_type, $valid_type)) {
             $user = User::where('id', $user_id)
-                ->where('organ_id', $organization->id)
+                ->where('organization_id', $organization->organization_id)
                 ->first();
 
             if (!empty($user)) {
                 $user->update([
-                    'organ_id' => null
+                    'organ_id' => null,
+                    'organization_id' => null
                 ]);
 
                 return response()->json([
@@ -941,3 +971,7 @@ class UserController extends Controller
         return response()->json([], 422);
     }
 }
+
+
+
+

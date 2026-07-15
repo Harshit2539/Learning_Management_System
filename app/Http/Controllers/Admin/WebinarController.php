@@ -557,6 +557,24 @@ public function store(Request $request)
     // echo 1;exit;
     $this->authorize('admin_webinars_create');
 
+    // SaaS plan course limit check
+    if (app()->has('currentOrganization')) {
+        $org  = app('currentOrganization');
+        $plan = $org->getActivePlan();
+        if ($plan && $plan->max_courses !== null) {
+            $orgUserIds = \App\User::where('organization_id', $org->id)->pluck('id');
+            $currentCount = Webinar::whereIn('creator_id', $orgUserIds)->count();
+            if ($currentCount >= $plan->max_courses) {
+                $toastData = [
+                    'title'  => trans('public.request_failed'),
+                    'msg'    => 'Course limit reached for your plan (' . $plan->max_courses . ' max). Please upgrade your plan.',
+                    'status' => 'error',
+                ];
+                return back()->withInput()->with(['toast' => $toastData]);
+            }
+        }
+    }
+
     // Validate input
     $this->validate($request, [
         'type' => 'required|in:webinar,course,text_lesson',
