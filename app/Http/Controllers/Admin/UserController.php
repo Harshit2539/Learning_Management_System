@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Web\traits\UserFormFieldsTrait;
 use App\Models\Badge;
+use App\Models\SaasOrganization;
 use App\Models\BecomeInstructor;
 use App\Models\Category;
 use App\Models\ForumTopic;
@@ -462,7 +463,7 @@ class UserController extends Controller
     {
         $this->authorize('admin_users_create');
 
-        $roles = Role::orderBy('created_at', 'desc')->get();
+        $roles = Role::where('is_admin', false)->orderBy('created_at', 'desc')->get();
         $userGroups = Group::orderBy('created_at', 'desc')->where('status', 'active')->get();
 
         $data = [
@@ -521,6 +522,40 @@ class UserController extends Controller
                 $referralSettings = getReferralSettings();
                 $usersAffiliateStatus = (!empty($referralSettings) and !empty($referralSettings['users_affiliate_status']));
 
+
+                // SaaS plan limit check
+                if (app()->has('currentOrganization')) {
+                    $org  = app('currentOrganization');
+                    $plan = $org->getActivePlan();
+
+                    if ($plan) {
+                        if ($role->name === Role::$user && $plan->max_students !== null) {
+                            $currentCount = User::where('organization_id', $org->id)
+                                ->where('role_name', Role::$user)->count();
+                            if ($currentCount >= $plan->max_students) {
+                                $toastData = [
+                                    'title'  => trans('public.request_failed'),
+                                    'msg'    => 'Student limit reached for your plan (' . $plan->max_students . ' max). Please upgrade your plan.',
+                                    'status' => 'error',
+                                ];
+                                return back()->withInput()->with(['toast' => $toastData]);
+                            }
+                        }
+
+                        if ($role->name === Role::$teacher && $plan->max_instructors !== null) {
+                            $currentCount = User::where('organization_id', $org->id)
+                                ->where('role_name', Role::$teacher)->count();
+                            if ($currentCount >= $plan->max_instructors) {
+                                $toastData = [
+                                    'title'  => trans('public.request_failed'),
+                                    'msg'    => 'Instructor limit reached for your plan (' . $plan->max_instructors . ' max). Please upgrade your plan.',
+                                    'status' => 'error',
+                                ];
+                                return back()->withInput()->with(['toast' => $toastData]);
+                            }
+                        }
+                    }
+                }
 
                 $user = User::create([
                     'full_name'       => $data['full_name'],
@@ -639,7 +674,7 @@ class UserController extends Controller
 
         $userBadges = $user->getBadges(false);
 
-        $roles = Role::all();
+        $roles = Role::where('is_admin', false)->get();
         $badges = Badge::all();
 
         $userLanguages = getGeneralSettings('user_languages');

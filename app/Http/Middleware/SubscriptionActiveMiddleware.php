@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\SaasOrganization;
 use Closure;
 use Illuminate\Http\Request;
 
@@ -9,14 +10,27 @@ class SubscriptionActiveMiddleware
 {
     public function handle(Request $request, Closure $next)
     {
-        if (!app()->has('currentOrganization')) {
+        $user = auth()->user();
+
+        if (!$user || empty($user->organization_id)) {
             return $next($request);
         }
 
-        $org = app('currentOrganization');
+        $org = SaasOrganization::find($user->organization_id);
 
-        if (!$org->hasActiveAccess()) {
-            // AJAX / API request
+        if (!$org) {
+            return $next($request);
+        }
+
+        // Allow trial access
+        if ($org->isOnTrial()) {
+            return $next($request);
+        }
+
+        // Check active subscription
+        $activeSub = $org->activeSubscription()->first();
+
+        if (!$activeSub) {
             if ($request->expectsJson()) {
                 return response()->json([
                     'status'  => 'error',
@@ -24,7 +38,6 @@ class SubscriptionActiveMiddleware
                 ], 403);
             }
 
-            // Redirect to billing/pricing page
             return redirect()->route('saas.pricing')->with(
                 'subscription_expired',
                 'Your subscription has expired. Please select a plan to continue.'

@@ -3,13 +3,14 @@
 namespace App\Http\Controllers\SuperAdmin;
 
 use App\Http\Controllers\Controller;
+use App\Mail\OrganizationWelcomeMail;
 use App\Models\SaasOrganization;
 use App\Models\SaasOrganizationSubscription;
 use App\Models\SaasPlan;
 use App\Models\Role;
 use App\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 
 class OrganizationController extends Controller
 {
@@ -51,13 +52,15 @@ class OrganizationController extends Controller
 
         // Create owner user
         $role = Role::where('name', 'admin')->first();
+        $plainPassword = $request->owner_password;
         $owner = User::create([
             'full_name'    => $request->owner_name,
             'email'        => $request->owner_email,
-            'password'     => Hash::make($request->owner_password),
+            'password'     => User::generatePassword($plainPassword),
             'role_name'    => $role->name,
             'role_id'      => $role->id,
             'status'       => 'active',
+            'verified'     => true,
             'created_at'   => time(),
         ]);
 
@@ -75,21 +78,32 @@ class OrganizationController extends Controller
         $owner->update(['organization_id' => $org->id]);
 
         // Attach subscription if plan selected
+        $sub  = null;
+        $plan = null;
         if ($request->filled('plan_id')) {
-            $plan = SaasPlan::find($request->plan_id);
+            $plan  = SaasPlan::find($request->plan_id);
             $cycle = $request->billing_cycle ?? 'monthly';
             $months = $cycle === 'yearly' ? 12 : 1;
 
-            SaasOrganizationSubscription::create([
-                'organization_id'   => $org->id,
-                'plan_id'           => $plan->id,
-                'billing_cycle'     => $cycle,
-                'starts_at'         => time(),
-                'expires_at'        => strtotime("+{$months} month"),
-                'status'            => 'active',
-                'amount_paid'       => $plan->getPrice($cycle),
-                'created_at'        => time(),
+            $sub = SaasOrganizationSubscription::create([
+                'organization_id' => $org->id,
+                'plan_id'         => $plan->id,
+                'billing_cycle'   => $cycle,
+                'starts_at'       => time(),
+                'expires_at'      => strtotime("+{$months} month"),
+                'status'          => 'active',
+                'amount_paid'     => $plan->getPrice($cycle),
+                'created_at'      => time(),
             ]);
+        }
+
+        // Send welcome email (with or without plan)
+        try {
+            Mail::to($owner->email)->send(
+                new OrganizationWelcomeMail($org, $plan, $sub, $request->owner_name, $request->owner_email, $plainPassword)
+            );
+        } catch (\Exception $e) {
+            \Log::error('OrganizationWelcomeMail failed: ' . $e->getMessage());
         }
 
         return redirect()->route('superadmin.organizations.index')

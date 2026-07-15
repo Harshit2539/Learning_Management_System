@@ -6,6 +6,7 @@ use App\Exports\WebinarStudents;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Panel\Traits\VideoDemoTrait;
 use App\Mixins\RegistrationPackage\UserPackage;
+use App\Mixins\Saas\SaasPlanLimiter;
 use App\Models\BundleWebinar;
 use App\Models\Category;
 use App\Models\Faq;
@@ -89,8 +90,11 @@ class WebinarController extends Controller
 
         $user = auth()->user();
 
-        if (!empty($user->organ_id)) {
-            $query = Webinar::where('creator_id', $user->organ_id)
+        if (!empty($user->organization_id)) {
+            $orgOwner = User::where('organization_id', $user->organization_id)
+                ->where('role_name', 'admin')
+                ->first();
+            $query = Webinar::where('creator_id', $orgOwner ? $orgOwner->id : 0)
                 ->where('status', 'active');
 
             $query = $this->organizationClassesFilters($query, $request);
@@ -271,6 +275,24 @@ class WebinarController extends Controller
             return redirect()->back();
         }
 
+        // SaaS plan limit check
+        $limiter = SaasPlanLimiter::forUser($user);
+        if (!$limiter && $user->isTeacher() && !empty($user->organization_id)) {
+            $orgOwner = User::where('organization_id', $user->organization_id)
+                ->where('role_name', 'admin')
+                ->first();
+            if ($orgOwner) {
+                $limiter = SaasPlanLimiter::forUser($orgOwner);
+            }
+        }
+        if ($limiter) {
+            $limitError = $limiter->checkCourseLimit();
+            if ($limitError) {
+                $toastData = ['title' => trans('public.request_failed'), 'msg' => $limitError, 'status' => 'error'];
+                return redirect()->back()->with(['toast' => $toastData]);
+            }
+        }
+
         $categories = Category::where('parent_id', null)
             ->with('subCategories')
             ->get();
@@ -280,7 +302,7 @@ class WebinarController extends Controller
 
         if ($isOrganization) {
             $teachers = User::where('role_name', Role::$teacher)
-                ->where('organ_id', $user->id)->get();
+                ->where('organization_id', $user->organization_id)->get();
         }
 
         $stepCount = empty(getGeneralOptionsSettings('direct_publication_of_courses')) ? 8 : 7;
@@ -315,6 +337,24 @@ class WebinarController extends Controller
             session()->put('registration_package_limited', $userCoursesCountLimited);
 
             return redirect()->back();
+        }
+
+        // SaaS plan limit check (double-check on store)
+        $saasLimiter = SaasPlanLimiter::forUser($user);
+        if (!$saasLimiter && $user->isTeacher() && !empty($user->organization_id)) {
+            $orgOwner = User::where('organization_id', $user->organization_id)
+                ->where('role_name', 'admin')
+                ->first();
+            if ($orgOwner) {
+                $saasLimiter = SaasPlanLimiter::forUser($orgOwner);
+            }
+        }
+        if ($saasLimiter) {
+            $limitError = $saasLimiter->checkCourseLimit();
+            if ($limitError) {
+                $toastData = ['title' => trans('public.request_failed'), 'msg' => $limitError, 'status' => 'error'];
+                return redirect()->back()->with(['toast' => $toastData]);
+            }
         }
 
         $currentStep = $request->get('current_step', 1);

@@ -63,7 +63,7 @@ php artisan serve
 Copy `.env.example` to `.env` and configure:
 
 ```env
-APP_NAME="Learning Management System"
+APP_NAME="Learning Management System Saas Version"
 APP_URL=http://localhost
 
 DB_CONNECTION=mysql

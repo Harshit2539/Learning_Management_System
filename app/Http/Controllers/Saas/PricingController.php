@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Saas;
 
 use App\Http\Controllers\Controller;
+use App\Mail\OrganizationWelcomeMail;
 use App\Models\SaasPlan;
 use App\Models\SaasOrganization;
 use App\Models\SaasOrganizationSubscription;
@@ -10,6 +11,7 @@ use App\Models\Role;
 use App\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 
 class PricingController extends Controller
 {
@@ -112,8 +114,20 @@ class PricingController extends Controller
 
         session()->forget(['saas_pending_subscription_id', 'saas_pending_org_id']);
 
-        $org = SaasOrganization::find($orgId);
+        $org  = SaasOrganization::with('owner')->find($orgId);
+        $sub  = SaasOrganizationSubscription::with('plan')->find($subscriptionId);
 
-        return view('saas.success', compact('org'));
+        // Send welcome email with plan details
+        if ($org && $sub && $org->owner && $org->owner->email) {
+            try {
+                Mail::to($org->owner->email)->send(
+                    new OrganizationWelcomeMail($org, $sub->plan, $sub, $org->owner->full_name, $org->owner->email, '(your chosen password)')
+                );
+            } catch (\Exception $e) {
+                \Log::error('OrganizationWelcomeMail failed: ' . $e->getMessage());
+            }
+        }
+
+        return view('saas.success', compact('org', 'sub'));
     }
 }
